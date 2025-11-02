@@ -1,0 +1,98 @@
+import jwt from "jsonwebtoken";
+
+/**
+ * Extract user authentication data from request
+ * @param {Request} request - The Next.js request object
+ * @returns {Object} - { isAdmin: boolean, userId: string|null, email: string|null }
+ */
+export async function extractAuthFromRequest(request) {
+  let isAdmin = false;
+  let userId = null;
+  let email = null;
+
+  // Try to get token from authorization header or cookies
+  const authHeader = request.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') 
+    ? authHeader.substring(7) 
+    : request.cookies?.get('uat')?.value;
+
+  if (token) {
+    try {
+      // Try JWT verification first
+      const secret = process.env.JWT_SECRET || "your_jwt_secret";
+      const decoded = jwt.verify(token, secret);
+      
+      isAdmin = decoded.isAdmin === true;
+      userId = decoded.userId;
+      email = decoded.email;
+      
+      console.log("JWT verified:", { userId, email, isAdmin });
+      return { isAdmin, userId, email };
+      
+    } catch (jwtError) {
+      console.warn("JWT verification failed:", jwtError.message);
+      
+      // Fallback to cookie data
+      const accountCookie = request.cookies?.get('account')?.value;
+      if (accountCookie) {
+        try {
+          const accountData = JSON.parse(decodeURIComponent(accountCookie));
+          isAdmin = accountData.isAdmin === true;
+          userId = accountData._id;
+          email = accountData.email;
+          
+          console.log("Using cookie fallback:", { userId, email, isAdmin });
+          return { isAdmin, userId, email };
+          
+        } catch (cookieError) {
+          console.error("Cookie parsing failed:", cookieError);
+        }
+      }
+    }
+  }
+
+  console.log("No valid authentication found");
+  return { isAdmin: false, userId: null, email: null };
+}
+
+/**
+ * Check if request has admin privileges
+ * @param {Request} request - The Next.js request object
+ * @returns {Promise<{isAdmin: boolean, userId: string|null, authData: Object}>}
+ */
+export async function checkAdminAuth(request) {
+  const authData = await extractAuthFromRequest(request);
+  
+  return {
+    isAdmin: authData.isAdmin,
+    userId: authData.userId,
+    authData
+  };
+}
+
+/**
+ * Middleware function to require admin access for API routes
+ * @param {Request} request - The Next.js request object
+ * @returns {Promise<{success: boolean, authData?: Object, errorResponse?: Response}>}
+ */
+export async function requireAdmin(request) {
+  const { isAdmin, userId, authData } = await checkAdminAuth(request);
+  
+  if (!isAdmin) {
+    const errorResponse = new Response(
+      JSON.stringify({
+        success: false,
+        message: "Access denied. Only administrators can perform this action.",
+        data: null
+      }),
+      {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    
+    return { success: false, errorResponse };
+  }
+  
+  return { success: true, authData: { ...authData, userId } };
+}

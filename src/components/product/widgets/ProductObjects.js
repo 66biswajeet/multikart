@@ -1,0 +1,233 @@
+import { descriptionSchema, discountSchema, dropDownScheme, optionalDropDownScheme, ifTypeSimpleSchema, nameSchema, variationSchema, externalUrlSchema, watermarkImageSchema, ifSeparatorSchema,ifLicenseKeySchema, testSchema } from "../../../utils/validation/ValidationSchemas";
+
+export const ProductValidationSchema = {
+  name: nameSchema,
+  short_description: nameSchema,
+  description: descriptionSchema,
+  stock_status: nameSchema,
+  external_url: externalUrlSchema,
+  sku: ifTypeSimpleSchema,
+  quantity: ifTypeSimpleSchema,
+  price: ifTypeSimpleSchema, // if (type == simple)
+  discount: discountSchema, // if (type == simple)
+  categories: dropDownScheme,
+  tags: optionalDropDownScheme,
+  tax_id: nameSchema,
+  variations: variationSchema,
+  wholesale_prices: testSchema
+};
+
+export function ProductInitValues(oldData, updateId) {
+  
+  console.log("🚀 ProductInitValues called with:", { oldData, updateId });
+  
+  let separator = ",";
+  if(oldData?.separator == 'comma') {
+    separator = ",";
+  } else if(oldData?.separator == 'semicolon') {
+    separator = ";";
+  } else if(oldData?.separator == 'pipe') {
+    separator = "|";
+  }
+  const attr_combination = () => {
+    
+    if (!oldData?.attributes || oldData.attributes.length === 0) {
+      return [];
+    }
+    
+    if (!oldData?.variations || oldData.variations.length === 0) {
+      return [];
+    }
+    
+    // Build combination array from attributes and variations
+    const variants = oldData.attributes.map((attribute, attrIndex) => {
+      
+      // Get all unique attribute value IDs used in variations for this attribute
+      const attributeValueIds = new Set();
+      
+      oldData.variations.forEach((variation, varIndex) => {
+        
+        if (!variation.attribute_values || variation.attribute_values.length === 0) return;
+        
+        variation.attribute_values.forEach((attrVal, valIndex) => {
+          if (!attrVal) return;
+          
+          // Handle both populated objects and plain ObjectIds
+          if (typeof attrVal === 'object' && attrVal !== null) {
+            // If it's a populated object, check if it belongs to this attribute
+            const attrValAttributeId = attrVal.attribute_id?._id || attrVal.attribute_id;
+            const currentAttributeId = attribute._id || attribute.id || attribute;
+            
+            
+            if (String(attrValAttributeId) === String(currentAttributeId)) {
+              const valueId = attrVal._id || attrVal.id;
+              attributeValueIds.add(String(valueId));
+            }
+          } else {
+            // If it's a plain ObjectId, we need to check against the attribute's attribute_values
+            // This happens when attribute_values is NOT populated
+            const attrValStr = String(attrVal);
+            const attributeValues = attribute.attribute_values || [];
+            
+            
+            const matchingValue = attributeValues.find(av => {
+              const avId = av._id || av.id || av;
+              const match = String(avId) === attrValStr;
+              return match;
+            });
+            
+            if (matchingValue) {
+              attributeValueIds.add(attrValStr);
+            } else {
+              console.log(`🔧     ❌ No match found in attribute_values`);
+            }
+          }
+        });
+      });
+      
+      const valuesArray = Array.from(attributeValueIds);
+      
+      return valuesArray.length > 0 
+        ? { name: attribute, values: valuesArray }
+        : null;
+    });
+    
+    const result = variants.filter(v => v !== null);
+    return result;
+  };
+  
+  const finalValues = {
+    // General
+    product_type: updateId ? (oldData?.product_type || "physical") : "physical",
+    store_id: updateId ? Number(oldData?.store_id) || "" : "",
+    name: updateId ? oldData?.name || "" : "",
+    short_description: updateId ? oldData?.short_description || "" : "",
+    description: updateId ? oldData?.description || "" : "",
+    tax_id :updateId ? Number(oldData?.tax_id) || "" : "",
+
+    // Product Images
+    product_thumbnail: updateId ? oldData?.product_thumbnail || "" : "",
+    size_chart_image: updateId ? oldData?.size_chart_image || "" : "",
+    product_galleries: updateId ? oldData?.product_galleries?.map((img) => img) || "" : "",
+    watermark: updateId ? Boolean(Number(oldData?.watermark)) : false,
+    watermark_position: updateId ? oldData?.watermark_position || "center" : "center",
+    watermark_image: updateId ? oldData?.watermark_image || "" : "",
+    type: updateId ? oldData?.type || "" : "simple",
+    stock_status: updateId ? oldData?.stock_status || "" : "in_stock",
+    sku: updateId ? oldData?.sku || "" : "",
+    quantity: updateId ? oldData?.quantity || "" : "",
+    price: updateId ? oldData?.price || "" : "",
+    discount: updateId ? oldData?.discount || "" : "",
+    sale_price: updateId ? oldData?.sale_price || "" : "0.00",
+    wholesale_price_type : updateId ? oldData?.wholesale_price_type || "" : "",
+    wholesale_prices:  updateId ? oldData?.wholesales || [] : [],
+    external_url:updateId ? oldData?.external_url || "" : "",
+    external_button_text :updateId ? oldData?.external_button_text || "" : "",
+   
+    // Variation
+    variations: updateId ? (oldData?.variations || []).map(variation => ({
+      ...variation,
+      name: variation.name || "",
+      price: variation.price || 0,
+      discount: variation.discount || 0,
+      sale_price: variation.sale_price || 0,
+      quantity: variation.quantity || 0,
+      sku: variation.sku || "",
+      stock_status: variation.stock_status || "in_stock",
+      status: Boolean(variation.status),
+      is_licensable: Boolean(variation.is_licensable),
+      is_licensekey_auto: Boolean(variation.is_licensekey_auto),
+      variation_image: variation.variation_image || "",
+      digital_file_ids: variation.digital_files?.map(file => file.id) || variation.digital_file_ids || [],
+      digital_files: variation.digital_files || [],
+      separator: variation.separator || "",
+      license_keys: variation.license_keys || "",
+      attribute_values: variation.attribute_values || []
+    })) : [],
+    combination: updateId ? attr_combination() : [{}],
+    attributes_ids: updateId ? oldData?.attributes?.map((elem) => elem.id) : [],
+    external_button_text: updateId ? oldData?.external_button_text : '',
+    external_url: updateId ? oldData?.external_url ?oldData?.external_url :"" : "",
+    is_digital: updateId ? oldData?.is_digital ? true : false : false,
+    digital_file_ids :updateId ? oldData?.digital_file_ids|| "" : "",
+    // Digigtal Product
+    is_licensable: updateId ? oldData?.is_licensable ? true : false : false,
+    is_licensekey_auto: updateId ? oldData?.is_licensekey_auto ? true : false : false,
+    separator: updateId ? oldData?.separator || "" : "",
+    license_key: updateId ? oldData?.license_keys?.map((value) => value?.license_key).join(separator) : "",
+    preview_audio_file_id: updateId ? oldData?.preview_audio_file_id || "" : "",
+    preview_type:updateId ? oldData?.preview_type || "" : "url",
+    preview_video_file_id: updateId ? oldData?.preview_video_file_id || "" : "",
+    preview_url : updateId ? oldData?.preview_url || "" : "",
+    // Setup
+    is_sale_enable: updateId ? oldData?.is_sale_enable ? true : false : false,
+    sale_starts_at: updateId ? oldData?.sale_starts_at || null : null,
+    sale_expired_at: updateId ? oldData?.sale_expired_at || null : null,
+    unit: updateId ? oldData?.unit || "" : "",
+    tags: updateId ? (
+      Array.isArray(oldData?.tags) 
+        ? oldData.tags.map((item) => {
+            console.log("🏷️ Processing tag:", item);
+            const tagId = typeof item === 'object' ? (item._id || item.id) : item;
+            console.log("🏷️ Tag ID:", tagId);
+            return tagId;
+          }).filter(Boolean)
+        : []
+    ) : [],
+    categories: updateId ? (
+      Array.isArray(oldData?.categories) 
+        ? oldData.categories.map((item) => {
+            console.log("📂 Processing category:", item);
+            const catId = typeof item === 'object' ? (item._id || item.id) : item;
+            console.log("📂 Category ID:", catId);
+            return catId;
+          }).filter(Boolean)
+        : []
+    ) : [],
+    brand_id : updateId ? (() => {
+      console.log("🏢 Processing brand:", oldData?.brand_id);
+      const brandId = typeof oldData?.brand_id === 'object' ? (oldData.brand_id?._id || oldData.brand_id?.id) : oldData?.brand_id;
+      console.log("🏢 Brand ID:", brandId);
+      return brandId || "";
+    })() : "",
+    is_random_related_products: updateId ? Boolean(Number(oldData?.is_random_related_products)) : true,
+    related_products: updateId ? (
+      Array.isArray(oldData?.related_products) 
+        ? oldData.related_products.map((elem) => typeof elem === 'object' ? (elem._id || elem.id) : elem).filter(Boolean)
+        : []
+    ) : [],
+    cross_sell_products: updateId ? (
+      Array.isArray(oldData?.cross_sell_products) 
+        ? oldData.cross_sell_products.map((elem) => typeof elem === 'object' ? (elem._id || elem.id) : elem).filter(Boolean)
+        : []
+    ) : [],
+   
+    // SEO
+    meta_title: updateId ? oldData?.meta_title || "" : "",
+    meta_description: updateId ? oldData?.meta_description || "" : "",
+    product_meta_image: updateId ? oldData?.product_meta_image || "" : "",
+    // Shipping Tax
+    is_free_shipping: updateId ? Boolean(Number(oldData?.is_free_shipping)) : "",
+    weight: updateId ? oldData?.weight || "" : "",
+    estimated_delivery_text: updateId ? oldData?.estimated_delivery_text : "",
+    is_return: updateId ? Boolean(oldData?.is_return) : true,
+    return_policy_text: updateId ? oldData?.return_policy_text : "",
+
+    // Status
+    is_featured: updateId ? Boolean(oldData?.is_featured) : false,
+    safe_checkout: updateId ? Boolean(oldData?.safe_checkout) : true,
+    secure_checkout: updateId ? Boolean(oldData?.secure_checkout) : true,
+    social_share: updateId ? Boolean(oldData?.social_share) : true,
+    encourage_order: updateId ? Boolean(oldData?.encourage_order) : true,
+    encourage_view: updateId ? Boolean(oldData?.encourage_view) : true,
+    is_trending: updateId ? Boolean(oldData?.is_trending) : false,
+    status: updateId ? Boolean(oldData?.status) : true
+  };
+  
+  console.log("🎯 ============ FINAL INITIAL VALUES ============");
+  console.log("🎯 variations array:", finalValues.variations);
+  console.log("🎯 combination array:", finalValues.combination);
+  console.log("🎯 Full initial values:", finalValues);
+  
+  return finalValues;
+}

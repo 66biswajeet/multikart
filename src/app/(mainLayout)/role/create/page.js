@@ -1,0 +1,21 @@
+"use client";
+import Loader from "@/components/commonComponent/Loader";
+import AdminProtectedRoute from "@/components/common/AdminProtectedRoute";
+import FormWrapper from "@/utils/hoc/FormWrapper";
+import dynamic from "next/dynamic";
+
+const Role = () => {
+  const PermissionForm = dynamic(() => import("@/components/role/PermissionForm").then((mod) => mod.default), {
+    loading: () => <Loader />,
+    ssr: false,
+  });
+  return (
+    <AdminProtectedRoute>
+      <FormWrapper title="AddRole">
+        <PermissionForm buttonName="Save Role" />
+      </FormWrapper>
+    </AdminProtectedRoute>
+  );
+};
+
+export default Role;
