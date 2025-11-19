@@ -1,9 +1,11 @@
 // authentication
 export const login = "/login";
 export const register = "register";
-export const forgotPassword = "forgot-password";
-export const verifyToken = "verify-token";
-export const updatePassword = "update-password";
+// --- UPDATED PATHS ---
+export const forgotPassword = "/auth/forgot-password";
+export const verifyToken = "/auth/verify-token";
+export const updatePassword = "/auth/update-password";
+// ---------------------
 export const LogoutAPI = "/logout";
 
 // self data (get)
@@ -57,10 +59,9 @@ export const coupon = "/coupon";
 
 // product api
 export const product = "/product";
-export const Approved = '/approve'
+export const Approved = "/approve";
 export const ProductImportAPI = "product/csv/import";
 export const ProductExportAPI = "product/csv/export";
-
 
 // shipping api
 export const shipping = "/shipping";
@@ -81,82 +82,82 @@ export const createAttachment = "/attachment";
 export const attachmentDelete = "/attachment/deleteAll";
 
 // Commissions
-export const commissions = '/commissionHistory';
+export const commissions = "/commissionHistory";
 
 // Currency
-export const currency = '/currency';
+export const currency = "/currency";
 
 // Wallet
-export const UserTransactions = '/wallet/consumer';
-export const WalletCredit = '/credit/wallet';
-export const WalletDebit = '/debit/wallet';
+export const UserTransactions = "/wallet/consumer";
+export const WalletCredit = "/credit/wallet";
+export const WalletDebit = "/debit/wallet";
 
 // Notifications
 export const NotificationsAPI = "/notifications";
-export const MarkAsRead = NotificationsAPI + '/markAsRead';
+export const MarkAsRead = NotificationsAPI + "/markAsRead";
 
 // Vendor Wallet
-export const VendorTransactions = '/wallet/vendor';
-export const VendorWalletCredit = '/credit/vendorWallet';
-export const VendorWalletDebit = '/debit/vendorWallet';
+export const VendorTransactions = "/wallet/vendor";
+export const VendorWalletCredit = "/credit/vendorWallet";
+export const VendorWalletDebit = "/debit/vendorWallet";
 
 // Points
-export const PointUserTransactions = '/points/consumer';
-export const PointCredit = '/credit/points';
-export const PointDebit = '/debit/points';
+export const PointUserTransactions = "/points/consumer";
+export const PointCredit = "/credit/points";
+export const PointDebit = "/debit/points";
 
 // Theme Option
-export const ThemeOptions = "/themeOptions"
+export const ThemeOptions = "/themeOptions";
 
 // Payment Details
-export const PaymentAccount = '/paymentAccount';
+export const PaymentAccount = "/paymentAccount";
 
 // Pages
-export const PagesAPI = '/page';
+export const PagesAPI = "/page";
 
 // Orders
-export const OrderAPI = '/order';
-export const OrderStatusAPI = '/orderStatus'
+export const OrderAPI = "/order";
+export const OrderStatusAPI = "/orderStatus";
 
 // Reviews
-export const ReviewAPI = '/review'
+export const ReviewAPI = "/review";
 
 // FAQ
-export const FaqAPI = '/faq'
+export const FaqAPI = "/faq";
 
 // Home Pages
-export const HomePageAPI = '/home'
+export const HomePageAPI = "/home";
 
 // Withdrawal
-export const WithdrawRequestAPI = '/withdrawRequest'
+export const WithdrawRequestAPI = "/withdrawRequest";
 
 // Refund
-export const RefundAPI = '/refund';
+export const RefundAPI = "/refund";
 
 // License
-export const LicenseAPI = '/license-key';
+export const LicenseAPI = "/license-key";
 
 // Brand
-export const BrandAPI = '/brand';
+export const BrandAPI = "/brand";
 
 // ADD TO CART
-export const AddtoCartAPI = '/cart';
+export const AddtoCartAPI = "/cart";
 
 // Address API
-export const AddressAPI = "/address"
+export const AddressAPI = "/address";
 
 // Badges
-export const BadgeApi = '/badge'
+export const BadgeApi = "/badge";
 
 // Badges
-export const VendorSettingAPI = '/updateStoreProfile'
+export const VendorSettingAPI = "/updateStoreProfile";
 
 // Dashboard API
-export const StatisticsCountAPI = '/statistics/count'
-export const DashboardChartAPI = "/dashboard/chart"
+export const StatisticsCountAPI = "/statistics/count";
+export const DashboardChartAPI = "/dashboard/chart";
 
 // Question And Answer
-export const QuestionNAnswerAPI = "/question-and-answer"
+export const QuestionNAnswerAPI = "/question-and-answer";
 
 //menu
 export const Menu = "/menu";
@@ -166,10 +167,15 @@ export const Subscribe = "/subscribe";
 
 //notice
 export const Notice = "/notice";
-export const markAsReadNotice  = "/notice/markAsRead";
+export const markAsReadNotice = "/notice/markAsRead";
 export const NoticeRecent = "/notice/recent";
-
 
 export const AppSettingsApi = "/app/settings";
 
-export const sortMenu = '/menu/sort' 
+export const sortMenu = "/menu/sort";
+
+// variants api
+export const VariantAPI = "variant"; // <--- ADD THIS LINE
+
+// // tags api
+// export const tag = "/tag";

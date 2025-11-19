@@ -1,10 +1,18 @@
+"use client";
 import useOutsideDropdown from "@/utils/hooks/customHooks/useOutsideDropdown";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useContext, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { RiArrowDownSLine, RiLogoutBoxLine, RiQuestionLine, RiUserLine, RiShieldUserLine } from "react-icons/ri";
+import {
+  RiArrowDownSLine,
+  RiLogoutBoxLine,
+  RiQuestionLine,
+  RiUserLine,
+  RiShieldUserLine,
+  RiStore2Line, // <-- 1. IMPORT THIS ICON
+} from "react-icons/ri";
 import { Media } from "reactstrap";
 import Avatar from "../../components/commonComponent/Avatar";
 import ShowModal from "../../elements/alerts&Modals/Modal";
@@ -13,7 +21,8 @@ import AccountContext from "../../helper/accountContext";
 import { logout, isAdmin, getAuthUser } from "@/utils/auth";
 
 const ProfileNav = () => {
-  const { ref, isComponentVisible, setIsComponentVisible } = useOutsideDropdown(false);
+  const { ref, isComponentVisible, setIsComponentVisible } =
+    useOutsideDropdown(false);
   const [profileModal, setProfileModal] = useState(false);
   const { t } = useTranslation("common");
   const [modal, setModal] = useState(false);
@@ -21,7 +30,10 @@ const ProfileNav = () => {
   const { accountData, accountContextData } = useContext(AccountContext);
   const [currentUser, setCurrentUser] = useState(null);
   const [userIsAdmin, setUserIsAdmin] = useState(false);
-  const isStateData = (accountContextData.image && Object?.keys(accountContextData.image).length > 0) || accountContextData.image == "";
+  const isStateData =
+    (accountContextData.image &&
+      Object?.keys(accountContextData.image).length > 0) ||
+    accountContextData.image == "";
 
   useEffect(() => {
     const user = getAuthUser();
@@ -41,23 +53,40 @@ const ProfileNav = () => {
             setIsComponentVisible((prev) => !prev), setProfileModal(!profileModal);
           }}
         >
-          <Avatar data={isStateData ? accountContextData.image : accountData?.profile_image} name={accountData} customClass={"rounded-circle"} />
+          <Avatar
+            data={
+              isStateData ? accountContextData.image : accountData?.profile_image
+            }
+            name={accountData}
+            customClass={"rounded-circle"}
+          />
           <Media body className="user-name-hide">
-            <span>{currentUser?.name || accountContextData.name || accountData?.name}</span>
+            <span>
+              {currentUser?.name ||
+                accountContextData.name ||
+                accountData?.name}
+            </span>
             <p className="mb-0 mt-1">
               {userIsAdmin ? (
                 <span className="text-success">
                   <RiShieldUserLine className="me-1" />
                   Admin
                 </span>
+              ) : accountData ? (
+                accountData?.role?.name
               ) : (
-                accountData ? accountData?.role?.name : t("Account")
+                t("Account")
               )}
               <RiArrowDownSLine className="middle" />
             </p>
           </Media>
         </Media>
-        <ul ref={ref} className={`profile-dropdown onhover-show-div ${profileModal ? "active" : ""}`}>
+        <ul
+          ref={ref}
+          className={`profile-dropdown onhover-show-div ${
+            profileModal ? "active" : ""
+          }`}
+        >
           <li>
             <Link href={"/account"}>
               <RiUserLine />
@@ -72,6 +101,18 @@ const ProfileNav = () => {
               </Link>
             </li>
           )}
+
+          {/* --- 2. ADD THIS VENDOR DASHBOARD LINK --- */}
+          {accountData?.store && accountData.store.vendor_status === "Approved" && (
+            <li>
+              <Link href="/vendor/dashboard">
+                <RiStore2Line />
+                <span>Vendor Dashboard</span>
+              </Link>
+            </li>
+          )}
+          {/* --- END OF ADDITION --- */}
+
           <li>
             <a onClick={() => setModal(true)}>
               <RiLogoutBoxLine />
@@ -85,8 +126,16 @@ const ProfileNav = () => {
         close={false}
         buttons={
           <>
-            <Btn title="No" onClick={() => setModal(false)} className="btn-md btn-outline fw-bold" />
-            <Btn title="Yes" onClick={() => handleLogout()} className="btn-theme btn-md fw-bold" />
+            <Btn
+              title="No"
+              onClick={() => setModal(false)}
+              className="btn-md btn-outline fw-bold"
+            />
+            <Btn
+              title="Yes"
+              onClick={() => handleLogout()}
+              className="btn-theme btn-md fw-bold"
+            />
           </>
         }
       >

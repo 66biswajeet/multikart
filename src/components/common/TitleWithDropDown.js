@@ -25,11 +25,15 @@ const TitleWithDropDown = ({
     <div className="title-header option-title">
       <h5>{t(moduleName)}</h5>
       {!noDropDown && (
-        <Dropdown isOpen={dropdownOpen} toggle={toggle} className="action-dropdown">
-          <DropdownToggle  caret className="btn-sm btn-outline">
+        <Dropdown
+          isOpen={dropdownOpen}
+          toggle={toggle}
+          className="action-dropdown"
+        >
+          <DropdownToggle caret className="btn-sm btn-outline">
             {t("action")}
           </DropdownToggle>
-          <DropdownMenu  end>
+          <DropdownMenu end>
             {importExport && (
               <ImportExport
                 Dropdown

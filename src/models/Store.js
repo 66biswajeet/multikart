@@ -10,11 +10,11 @@ const storeSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    // slug: {
-    //   type: String,
-    //   required: true,
-    //   unique: true,
-    // },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     //----new fields added ---//
     // Add after line 16 (after slug field):
     vendor_id: {

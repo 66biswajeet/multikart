@@ -1,14 +1,15 @@
+//
+//------------------------------------------------------
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import CheckBoxField from "../inputFields/CheckBoxField.js";
 import request from "../../utils/axiosUtils/index.js";
-import { BrandAPI, Category, product, tag } from "../../utils/axiosUtils/API.js";
-import MultiSelectField from "../inputFields/MultiSelectField.js";
+import { product } from "../../utils/axiosUtils/API.js"; // Removed BrandAPI, Category, tag
 import SearchableSelectInput from "../inputFields/SearchableSelectInput.js";
-import SimpleInputField from "../inputFields/SimpleInputField.js";
-import ProductDateRangePicker from "./widgets/DateRangePicker.js";
 import useCustomQuery from "@/utils/hooks/useCustomQuery.js";
+// Removed MultiSelectField, SimpleInputField, ProductDateRangePicker
 
 const SetupTab = ({ values, setFieldValue, errors, updateId }) => {
   const { t } = useTranslation("common");
@@ -17,91 +18,64 @@ const SetupTab = ({ values, setFieldValue, errors, updateId }) => {
   const [tc, setTc] = useState(null);
   const router = useRouter();
 
-  // Getting Category Data with type products
-  const { data: categoryData } = useCustomQuery(
-    [Category], 
-    () => request({ url: Category, params: { status: 1, type: "product" } }, router), 
-    { 
-      refetchOnWindowFocus: false, 
-      select: (data) => data.data.data.map((cat) => ({
-        id: cat._id || cat.id,
-        name: cat.name,
-        slug: cat.slug,
-        subcategories: cat.subcategories
-      }))
-    }
-  );
+  // Removed Category, Tag, and Brand data fetching
 
-  // Getting Tags Data with type products
-  const { data: tagData } = useCustomQuery(
-    [tag], 
-    () => request({ url: tag, params: { status: 1, type: "product" } }, router), 
-    { 
-      refetchOnWindowFocus: false, 
-      select: (data) => data.data.data.map((t) => ({
-        id: t._id || t.id,
-        name: t.name,
-        slug: t.slug
-      }))
-    }
-  );
-
-  //Getting Brand Data
-  const { data: BrandsData } = useCustomQuery(
-    [BrandAPI], 
-    () => request({ url: BrandAPI, params: { status: 1 } }, router), 
-    { 
-      refetchOnWindowFocus: false, 
-      select: (data) => data.data.data.map((brand) => ({
-        id: brand._id || brand.id,
-        name: brand.name,
-        slug: brand.slug
-      }))
-    }
-  );
-
-  // Getting Products Data
+  // Getting Products Data (to populate the selectors)
   const [arrayState, setArrayState] = useState([]);
   useEffect(() => {
     if (updateId) {
-      setArrayState((prev) => Array.from(new Set([...prev, ...values["related_products"], ...values["cross_sell_products"]])));
+      setArrayState((prev) =>
+        Array.from(
+          new Set([
+            ...prev,
+            ...(values["related_products"] || []),
+            ...(values["cross_sell_products"] || []),
+          ])
+        )
+      );
     }
   }, [updateId]);
+
   const {
     data: productData,
     isLoading: productLoader,
     refetch,
   } = useCustomQuery(
-    [product, arrayState],
+    [product, arrayState, customSearch], // Added customSearch to queryKey
     () =>
       request(
         {
           url: product,
           params: {
-            status: 1,
+            status: "active", // Use new status string
             search: customSearch ? customSearch : "",
-            paginate: arrayState?.length >= 15 ? arrayState?.length : 15,
+            paginate: 15,
             ids: customSearch ? null : arrayState?.join() || null,
-            with_union_products: arrayState?.length ? (arrayState?.length >= 15 ? 0 : 1) : 0,
           },
         },
         router
       ),
     {
-      enabled: false,
+      enabled: true, // Enable query
       refetchOnWindowFocus: false,
       select: (res) =>
         res?.data?.data
-          .filter((elem) => (updateId ? elem?.id !== Number(updateId) : elem))
+          .filter((elem) => (updateId ? elem.id !== updateId : elem)) // Filter out self
           .map((elem) => {
-            return { id: elem.id, name: elem.name, image: elem?.product_thumbnail?.original_url || "/assets/images/placeholder.png", slug: elem?.slug };
+            // Find primary image from the NEW media array
+            const primaryImage =
+              elem.media?.find((m) => m.is_primary)?.url ||
+              elem.media?.[0]?.url ||
+              "/assets/images/placeholder.png";
+            return {
+              id: elem.id,
+              name: elem.product_name,
+              image: primaryImage,
+              slug: elem.slug,
+            };
           }),
     }
   );
-
-  useEffect(() => {
-    productLoader && refetch();
-  }, [productLoader]);
 
   // Added debouncing
   useEffect(() => {
@@ -109,50 +83,20 @@ const SetupTab = ({ values, setFieldValue, errors, updateId }) => {
     setTc(setTimeout(() => setCustomSearch(search), 500));
   }, [search]);
 
-  // Getting users data on searching users
+  // Refetch when search changes
   useEffect(() => {
-    !productLoader && refetch();
-  }, [customSearch, arrayState, updateId]);
+    refetch();
+  }, [customSearch]);
 
-  const customCrossSellProduct = (productData) => {
-    return productData?.filter((elem) => elem?.stock_status !== "out_of_stock" && elem?.type !== "classified");
-  };
-
-  useEffect(()=>{
-    console.log('setup tab values',values)
-    console.log('setup tab errors',errors)
-    console.log("tag data",tagData)
-    console.log("category data",categoryData)
-    console.log("brand data",BrandsData)
-  },[values,errors,tagData,categoryData,BrandsData])
-
-  // if (productLoader) return <Loader />;
   return (
     <>
-      <ProductDateRangePicker values={values} setFieldValue={setFieldValue} />
+      {/* Removed DateRangePicker, Unit, Tags, Categories, Brand */}
 
-      <SimpleInputField nameList={[{ name: "unit", title: "Unit", placeholder: t("Enter Unit"), helpertext: "*Specify the measurement unit, such as 10 Pieces, 1 KG, 1 Ltr, etc." }]} />
-
-      <MultiSelectField errors={errors} values={values} setFieldValue={setFieldValue} name="tags" data={tagData || []} />
-
-      <MultiSelectField errors={errors} values={values} setFieldValue={setFieldValue} name="categories" require="true" data={categoryData || []} />
-
-      <SearchableSelectInput
-        nameList={[
-          {
-            name: "brand_id",
-            title: "Brands",
-            inputprops: {
-              name: "brand_id",
-              id: "brand_id",
-              options: BrandsData || [],
-              close: true,
-            },
-          },
-        ]}
+      <CheckBoxField
+        name="is_random_related_products"
+        title="RandomRelatedProduct"
+        helpertext="*Enabling this option allows the backend to randomly select 6 products for display."
       />
-
-      <CheckBoxField name="is_random_related_products" title="RandomRelatedProduct" helpertext="*Enabling this option allows the backend to randomly select 6 products for display." />
       {!values["is_random_related_products"] && (
         <SearchableSelectInput
           nameList={[
@@ -164,31 +108,39 @@ const SetupTab = ({ values, setFieldValue, errors, updateId }) => {
                 id: "related_products",
                 options: productData || [],
                 setsearch: setSearch,
-                helpertext: "*Choose a maximum of 6 products for effective related products display.",
+                helpertext:
+                  "*Choose a maximum of 6 products for effective related products display.",
               },
             },
           ]}
         />
       )}
-      {values["product_type"] === "physical" ? (
-        <SearchableSelectInput
-          nameList={[
-            {
+
+      {/* Removed product_type check */}
+      <SearchableSelectInput
+        nameList={[
+          {
+            name: "cross_sell_products",
+            title: "CrossSellProduct",
+            inputprops: {
               name: "cross_sell_products",
-              title: "CrossSellProduct",
-              inputprops: {
-                name: "cross_sell_products",
-                id: "cross_sell_products",
-                options: customCrossSellProduct(productData)?.map((elem) => {
-                  return { id: elem.id, name: elem.name, image: elem?.image || "/assets/images/placeholder.png" };
-                }),
-                setsearch: setSearch,
-                helpertext: "*Choose a maximum of 3 products for effective cross-selling display.",
-              },
+              id: "cross_sell_products",
+              options:
+                productData?.map((elem) => {
+                  // Use productData directly
+                  return {
+                    id: elem.id,
+                    name: elem.name,
+                    image: elem?.image || "/assets/images/placeholder.png",
+                  };
+                }) || [],
+              setsearch: setSearch,
+              helpertext:
+                "*Choose a maximum of 3 products for effective cross-selling display.",
             },
-          ]}
-        />
-      ) : null}
+          },
+        ]}
+      />
     </>
   );
 };

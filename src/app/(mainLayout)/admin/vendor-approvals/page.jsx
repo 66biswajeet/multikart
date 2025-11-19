@@ -4,12 +4,30 @@ import { useRouter } from "next/navigation";
 import { Button, Table, Badge } from "reactstrap";
 import request from "@/utils/axiosUtils";
 import { toast } from "react-toastify";
+import { isAdmin } from "@/utils/auth";
 
 export default function VendorApprovalsPage() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all, Pending, Approved, Rejected
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  // 3. Check Authorization on mount
+  useEffect(() => {
+    if (!isAdmin()) {
+      router.push("/"); // Redirect non-admins to home
+    } else {
+      setIsAuthorized(true); // User is an admin
+    }
+  }, [router]);
+
+  // 4. Load data *after* auth is confirmed AND when filter changes
+  useEffect(() => {
+    if (isAuthorized) {
+      loadVendors();
+    }
+  }, [isAuthorized, filter]);
 
   useEffect(() => {
     loadVendors();
@@ -59,6 +77,10 @@ export default function VendorApprovalsPage() {
     };
     return <Badge color={colors[status] || "secondary"}>{status}</Badge>;
   };
+
+  if (!isAuthorized) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="container-fluid">

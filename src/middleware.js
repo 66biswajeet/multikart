@@ -1,70 +1,80 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
+export const runtime = "nodejs";
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   console.log("Middleware executing for path:", pathname);
 
   // Skip authentication for auth routes
-  if (pathname.startsWith('/auth/') || pathname === '/auth') {
+  if (pathname.startsWith("/auth/") || pathname === "/auth") {
     console.log("Skipping auth for auth route:", pathname);
     return NextResponse.next();
   }
 
   // Skip authentication for API auth routes
-  if (pathname.startsWith('/api/auth/')) {
+  if (pathname.startsWith("/api/auth/")) {
     console.log("Skipping auth for API auth route:", pathname);
     return NextResponse.next();
   }
 
   // Skip authentication for static files
-  if (pathname.startsWith('/_next/') || pathname.startsWith('/assets/') || pathname.includes('.')) {
+  if (
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/assets/") ||
+    pathname.includes(".")
+  ) {
     return NextResponse.next();
   }
 
   try {
     // Get token from Authorization header or cookies
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.startsWith('Bearer ') 
-      ? authHeader.substring(7) 
-      : request.cookies.get('uat')?.value;
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : request.cookies.get("uat")?.value;
 
     console.log("Token found:", !!token);
 
     if (!token) {
       console.log("No token found, redirecting to login");
       // Redirect to login for protected routes
-      if (pathname.startsWith('/api/')) {
+      if (pathname.startsWith("/api/")) {
         return NextResponse.json(
-          { success: false, message: 'Access denied. No token provided.' },
+          { success: false, message: "Access denied. No token provided." },
           { status: 401 }
         );
       }
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
     // Verify JWT token properly
     console.log("Verifying JWT token...");
     let decoded;
-    
+
     try {
       const secret = process.env.JWT_SECRET || "your_jwt_secret";
       decoded = jwt.verify(token, secret);
-      console.log("JWT verified successfully:", { userId: decoded.userId, email: decoded.email, isAdmin: decoded.isAdmin });
+      console.log("JWT verified successfully:", {
+        userId: decoded.userId,
+        email: decoded.email,
+        isAdmin: decoded.isAdmin,
+      });
     } catch (jwtError) {
       console.error("JWT verification failed:", jwtError.message);
-      
+
       // Fallback: try to get user data from cookies
       console.log("Falling back to cookie-based auth...");
-      const userDataCookie = request.cookies.get('account')?.value;
+      const userDataCookie = request.cookies.get("account")?.value;
       if (userDataCookie) {
         try {
           const userData = JSON.parse(userDataCookie);
           decoded = {
             userId: userData._id || userData.id,
             email: userData.email,
-            isAdmin: userData.isAdmin === true
+            isAdmin: userData.isAdmin === true,
           };
           console.log("Using cookie data:", decoded);
         } catch (e) {
@@ -75,20 +85,20 @@ export async function middleware(request) {
         throw new Error("No valid authentication found");
       }
     }
-    
+
     const isUserAdmin = decoded.isAdmin;
     const userEmail = decoded.email;
     const userId = decoded.userId;
-    
+
     // Add user data to request headers for API routes
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-user-id', String(userId || ''));
-    requestHeaders.set('x-user-email', String(userEmail || ''));
-    requestHeaders.set('x-is-admin', String(isUserAdmin));
-    
+    requestHeaders.set("x-user-id", String(userId || ""));
+    requestHeaders.set("x-user-email", String(userEmail || ""));
+    requestHeaders.set("x-is-admin", String(isUserAdmin));
+
     console.log("Setting headers:", { userId, userEmail, isUserAdmin });
     console.log("Headers set successfully");
-    
+
     const response = NextResponse.next({
       request: {
         headers: requestHeaders,
@@ -96,38 +106,43 @@ export async function middleware(request) {
     });
 
     // Check admin access for user management routes
-    if (pathname.startsWith('/user') || pathname.startsWith('/api/user')) {
+    if (pathname.startsWith("/user") || pathname.startsWith("/api/user")) {
       console.log("Checking admin access for user management route");
       if (!isUserAdmin) {
         console.log("Access denied - user is not admin");
-        if (pathname.startsWith('/api/')) {
+        if (pathname.startsWith("/api/")) {
           return NextResponse.json(
-            { success: false, message: 'Access denied. Admin privileges required.' },
+            {
+              success: false,
+              message: "Access denied. Admin privileges required.",
+            },
             { status: 403 }
           );
         }
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     }
 
     console.log("Middleware allowing access to:", pathname);
     return response;
-
   } catch (error) {
-    console.error('Middleware JWT Error:', error.message);
-    console.error('Error details:', error);
-    console.log('Token that failed verification:', request.cookies.get('uat')?.value?.substring(0, 20) + '...');
-    
-    if (pathname.startsWith('/api/')) {
+    console.error("Middleware JWT Error:", error.message);
+    console.error("Error details:", error);
+    console.log(
+      "Token that failed verification:",
+      request.cookies.get("uat")?.value?.substring(0, 20) + "..."
+    );
+
+    if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { success: false, message: 'Invalid token.' },
+        { success: false, message: "Invalid token." },
         { status: 401 }
       );
     }
-    
+
     // Redirect to login for invalid token
-    console.log('Redirecting to login due to JWT error');
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    console.log("Redirecting to login due to JWT error");
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 }
 

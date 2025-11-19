@@ -1,71 +1,106 @@
 import { NextResponse } from "next/server";
-import order from "./order.json";
+import dbConnect from "@/lib/dbConnect";
+import Order from "@/models/Order";
+import { requireAdmin } from "@/utils/auth/serverAuth";
 
+/**
+ * GET /api/order - Get all orders with filtering, searching, sorting and pagination
+ */
 export async function GET(request) {
-  const searchParams = request?.nextUrl?.searchParams;
-  const queryCategory = searchParams.get("category");
-  const querySortBy = searchParams.get("sortBy");
-  const querySearch = searchParams.get("search");
-  const queryTag = searchParams.get("tag");
-  const queryIds = searchParams.get("ids");
+  try {
+    await dbConnect();
 
-  const queryPage = parseInt(searchParams.get("page")) || 1; // default to page 1
-  const queryLimit = parseInt(searchParams.get("paginate")) || 10; // default to 10 items per page
-
-  let orders = order?.data || [];
-
-  // Filtering logic
-  if (querySortBy || queryCategory || querySearch || queryTag || queryIds) {
-    // Filter by category
-    if (queryCategory) {
-      orders = orders.filter((post) => post?.categories?.some((category) => queryCategory.split(",").includes(category.slug)));
+    // Check admin authentication
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
     }
 
-    // Filter by tag
-    if (queryTag) {
-      orders = orders.filter((post) => post?.tags?.some((tag) => queryTag.split(",").includes(tag.slug)));
+    const searchParams = request?.nextUrl?.searchParams;
+    const queryStatus = searchParams.get("status");
+    const queryPaymentStatus = searchParams.get("payment_status");
+    const querySearch = searchParams.get("search");
+    const queryOrderNumber = searchParams.get("order_number");
+    const queryConsumerId = searchParams.get("consumer_id");
+    const queryStartDate = searchParams.get("start_date");
+    const queryEndDate = searchParams.get("end_date");
+    const queryPage = parseInt(searchParams.get("page")) || 1;
+    const queryLimit = parseInt(searchParams.get("paginate")) || 10;
+
+    // Build MongoDB query
+    let query = {};
+
+    // Filter by order status
+    if (queryStatus) {
+      query.order_status = queryStatus;
     }
 
-    if (queryIds) {
-      orders = orders.filter((product) => queryIds.split(",").includes(product?.id?.toString()));
+    // Filter by payment status
+    if (queryPaymentStatus) {
+      query.payment_status = queryPaymentStatus;
     }
 
-    // Search filter by title
+    // Filter by consumer
+    if (queryConsumerId) {
+      query.consumer_id = queryConsumerId;
+    }
+
+    // Filter by order number
+    if (queryOrderNumber) {
+      query.order_number = { $regex: queryOrderNumber, $options: "i" };
+    }
+
+    // Search by order number or consumer name
     if (querySearch) {
-      orders = orders.filter((post) => post.title.toLowerCase().includes(querySearch.toLowerCase()));
+      query.$or = [
+        { order_number: { $regex: querySearch, $options: "i" } },
+        // Add consumer name search if populated
+      ];
     }
 
-    // Sort logic
-    if (querySortBy === "asc") {
-      orders = orders.sort((a, b) => a.id - b.id);
-    } else if (querySortBy === "desc") {
-      orders = orders.sort((a, b) => b.id - a.id);
-    } else if (querySortBy === "a-z") {
-      orders = orders.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (querySortBy === "z-a") {
-      orders = orders.sort((a, b) => b.title.localeCompare(a.title));
-    } else if (querySortBy === "newest") {
-      orders = orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    } else if (querySortBy === "oldest") {
-      orders = orders.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    // Date range filter
+    if (queryStartDate || queryEndDate) {
+      query.created_at = {};
+      if (queryStartDate) {
+        query.created_at.$gte = new Date(queryStartDate);
+      }
+      if (queryEndDate) {
+        query.created_at.$lte = new Date(queryEndDate);
+      }
     }
+
+    // Build sort options
+    const sortOptions = { created_at: -1 }; // Default: newest first
+
+    // Execute query with pagination
+    const totalOrders = await Order.countDocuments(query);
+    const orders = await Order.find(query)
+      .populate("consumer_id", "name email phone")
+      .populate("billing_address")
+      .populate("shipping_address")
+      .populate("items.product_id", "name slug product_thumbnail")
+      .sort(sortOptions)
+      .skip((queryPage - 1) * queryLimit)
+      .limit(queryLimit);
+
+    const response = {
+      current_page: queryPage,
+      last_page: Math.ceil(totalOrders / queryLimit),
+      total: totalOrders,
+      per_page: queryLimit,
+      data: orders,
+    };
+
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error("❌ Order GET Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch orders",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
-
-  orders = orders?.length ? orders : order?.data;
-
-  // Implementing pagination
-  const totalOrders = orders.length;
-  const startIndex = (queryPage - 1) * queryLimit;
-  const endIndex = startIndex + queryLimit;
-  const paginatedOrders = orders.slice(startIndex, endIndex);
-
-  const response = {
-    current_page: queryPage,
-    last_page: Math.ceil(totalOrders / queryLimit),
-    total: totalOrders,
-    per_page: queryLimit,
-    data: paginatedOrders, // the orders for the current page
-  };
-
-  return NextResponse.json(response);
 }

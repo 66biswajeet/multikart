@@ -14,13 +14,18 @@ const Layout = (props) => {
   const path = usePathname();
   let data1 = {};
   const ISSERVER = typeof window === "undefined";
-  if (!ISSERVER) data1 = localStorage.getItem("account") && JSON.parse(localStorage.getItem("account"));
+  if (!ISSERVER)
+    data1 =
+      localStorage.getItem("account") &&
+      JSON.parse(localStorage.getItem("account"));
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
   useEffect(() => {
-    mode ? document.body.classList.add("dark-only") : document.body.classList.remove("dark-only");
+    mode
+      ? document.body.classList.add("dark-only")
+      : document.body.classList.remove("dark-only");
   }, [mode, ltr]);
   useEffect(() => {
     document.body.classList.add("version=1.0.0");
@@ -28,14 +33,24 @@ const Layout = (props) => {
 
   useEffect(() => {
     const securePaths = mounted && ConvertPermissionArr(data1?.permissions);
-    if (mounted && !securePaths.find((item) => item?.name == replacePath(path?.split("/")[1]))) {
+    if (
+      mounted &&
+      !securePaths.find(
+        (item) => item?.name == replacePath(path?.split("/")[1])
+      )
+    ) {
       // router.push("/403");
     }
   }, [data1]);
   return (
     <>
       <div className="page-wrapper compact-wrapper" id="pageWrapper">
-        <Header setMode={setMode} mode={mode} setLtr={setLtr} settingData={"settingData"} />
+        <Header
+          setMode={setMode}
+          mode={mode}
+          setLtr={setLtr}
+          settingData={"settingData"}
+        />
         <div className="page-body-wrapper">
           <Sidebar />
           <div className="page-body">

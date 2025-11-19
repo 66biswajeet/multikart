@@ -9,41 +9,47 @@ export async function extractAuthFromRequest(request) {
   let isAdmin = false;
   let userId = null;
   let email = null;
+  let role = null;
 
   // Try to get token from authorization header or cookies
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.startsWith('Bearer ') 
-    ? authHeader.substring(7) 
-    : request.cookies?.get('uat')?.value;
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.substring(7)
+    : request.cookies?.get("uat")?.value;
 
   if (token) {
     try {
       // Try JWT verification first
       const secret = process.env.JWT_SECRET || "your_jwt_secret";
       const decoded = jwt.verify(token, secret);
-      
+
       isAdmin = decoded.isAdmin === true;
       userId = decoded.userId;
       email = decoded.email;
-      
+      role = decoded.role || null;
+
       console.log("JWT verified:", { userId, email, isAdmin });
-      return { isAdmin, userId, email };
-      
+      return { isAdmin, userId, email, role };
     } catch (jwtError) {
       console.warn("JWT verification failed:", jwtError.message);
-      
+
       // Fallback to cookie data
-      const accountCookie = request.cookies?.get('account')?.value;
+      const accountCookie = request.cookies?.get("account")?.value;
       if (accountCookie) {
         try {
           const accountData = JSON.parse(decodeURIComponent(accountCookie));
           isAdmin = accountData.isAdmin === true;
           userId = accountData._id;
           email = accountData.email;
-          
-          console.log("Using cookie fallback:", { userId, email, isAdmin });
+          role = accountData.role || null;
+
+          console.log("Using cookie fallback:", {
+            userId,
+            email,
+            isAdmin,
+            role,
+          });
           return { isAdmin, userId, email };
-          
         } catch (cookieError) {
           console.error("Cookie parsing failed:", cookieError);
         }
@@ -52,7 +58,7 @@ export async function extractAuthFromRequest(request) {
   }
 
   console.log("No valid authentication found");
-  return { isAdmin: false, userId: null, email: null };
+  return { isAdmin: false, userId: null, email: null, role: null };
 }
 
 /**
@@ -62,11 +68,12 @@ export async function extractAuthFromRequest(request) {
  */
 export async function checkAdminAuth(request) {
   const authData = await extractAuthFromRequest(request);
-  
+
   return {
     isAdmin: authData.isAdmin,
     userId: authData.userId,
-    authData
+    authData,
+    role: authData.role,
   };
 }
 
@@ -76,23 +83,57 @@ export async function checkAdminAuth(request) {
  * @returns {Promise<{success: boolean, authData?: Object, errorResponse?: Response}>}
  */
 export async function requireAdmin(request) {
-  const { isAdmin, userId, authData } = await checkAdminAuth(request);
-  
-  if (!isAdmin) {
+  const { isAdmin, userId, authData, role } = await checkAdminAuth(request);
+
+  if (!isAdmin && role !== "admin") {
     const errorResponse = new Response(
       JSON.stringify({
         success: false,
         message: "Access denied. Only administrators can perform this action.",
-        data: null
+        data: null,
       }),
       {
         status: 403,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       }
     );
-    
+
     return { success: false, errorResponse };
   }
-  
+
   return { success: true, authData: { ...authData, userId } };
+}
+
+// =================================================================
+// ==  NEW FUNCTION TO ADD  =========================================
+// =================================================================
+
+/**
+ * Middleware function to require standard user access for API routes
+ * @param {Request} request - The Next.js request object
+ * @returns {Promise<{success: boolean, authData?: Object, errorResponse?: Response}>}
+ */
+export async function requireAuth(request) {
+  // Use your existing function to get auth data
+  const authData = await extractAuthFromRequest(request);
+
+  // Fail if no userId is found
+  if (!authData.userId) {
+    const errorResponse = new Response(
+      JSON.stringify({
+        success: false,
+        message: "Authentication required. Please log in.",
+        data: null,
+      }),
+      {
+        status: 401, // 401 Unauthorized
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    return { success: false, errorResponse };
+  }
+
+  // Pass along the authData (which includes userId, email, isAdmin)
+  return { success: true, authData: authData };
 }

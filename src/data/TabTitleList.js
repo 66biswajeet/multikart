@@ -1,4 +1,38 @@
-import { RiAccountBoxLine, RiAlertLine, RiBankCardLine, RiBankLine, RiCheckboxCircleLine, RiCloseCircleLine, RiComputerLine, RiContactsLine, RiDatabaseLine, RiEarthLine, RiFacebookCircleLine, RiFileList2Line, RiFileListLine, RiGoogleFill, RiGoogleLine, RiImageLine, RiLayoutBottom2Line, RiLayoutTop2Line, RiLineChartLine, RiMailOpenLine, RiPaypalLine, RiPercentLine, RiPhoneLockLine, RiPieChartLine, RiRadioButtonLine, RiRecordCircleLine, RiRefundLine, RiSettingsLine, RiShoppingBasketLine, RiToolsLine, RiTruckLine, RiWallet3Fill } from "react-icons/ri";
+import {
+  RiAccountBoxLine,
+  RiAlertLine,
+  RiBankCardLine,
+  RiBankLine,
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiComputerLine,
+  RiContactsLine,
+  RiDatabaseLine,
+  RiEarthLine,
+  RiFacebookCircleLine,
+  RiFileList2Line,
+  RiFileListLine,
+  RiGoogleFill,
+  RiGoogleLine,
+  RiImageLine,
+  RiLayoutBottom2Line,
+  RiLayoutTop2Line,
+  RiLineChartLine,
+  RiMailOpenLine,
+  RiMapPinLine,
+  RiPaypalLine,
+  RiPercentLine,
+  RiPhoneLockLine,
+  RiPieChartLine,
+  RiRadioButtonLine,
+  RiRecordCircleLine,
+  RiRefundLine,
+  RiSettingsLine,
+  RiShoppingBasketLine,
+  RiToolsLine,
+  RiTruckLine,
+  RiWallet3Fill,
+} from "react-icons/ri";
 import { TbTruckDelivery } from "react-icons/tb";
 const header1 = "/assets/images/theme-option/header/01.jpg";
 const header2 = "/assets/images/theme-option/header/02.jpg";
@@ -14,10 +48,11 @@ const product03 = "/assets/images/theme-option/product/04.jpg";
 const product04 = "/assets/images/theme-option/product/07.jpg";
 const basicSellerStore = "/assets/images/theme-option/seller/basic-details.png";
 const basicSeller = "/assets/images/theme-option/seller/basic.png";
-const classicSellerStore = "/assets/images/theme-option/seller/classic-details.png";
+const classicSellerStore =
+  "/assets/images/theme-option/seller/classic-details.png";
 const classicSeller = "/assets/images/theme-option/seller/classic.png";
-const  blogStore1  = "/assets/images/theme-option/shop/01.jpg";
-const  blog01  = "/assets/images/theme-option/shop/01.jpg";
+const blogStore1 = "/assets/images/theme-option/shop/01.jpg";
+const blog01 = "/assets/images/theme-option/shop/01.jpg";
 const blog02 = "/assets/images/theme-option/shop/02.jpg";
 const themeOption3 = "/assets/images/theme-option/shop/03.jpg";
 const themeOption4 = "/assets/images/theme-option/shop/04.jpg";
@@ -31,53 +66,188 @@ const themeOption2 = "/assets/images/theme-option/shop/11.jpg";
 const themeOption8 = "/assets/images/theme-option/shop/13.jpg";
 const themeOption9 = "/assets/images/theme-option/shop/14.jpg";
 
+// export const ProductTabTitleListData = [
+//   {
+//     title: "General",
+//     icon: <RiSettingsLine />,
+//     inputs: [
+//       "product_type",
+//       "store_id",
+//       "name",
+//       "description",
+//       "short_description",
+//       "description",
+//       "tax_id",
+//     ],
+//   },
+//   {
+//     title: "Product Images",
+//     icon: <RiImageLine />,
+//     inputs: [
+//       "product_thumbnail",
+//       "product_thumbnail_id",
+//       "size_chart_image",
+//       "size_chart_image_id",
+//       "product_galleries",
+//       "product_galleries_id",
+//       "watermark",
+//       "watermark_position",
+//       "watermark_image_id",
+//     ],
+//   },
+//   {
+//     title: "Inventory",
+//     icon: <RiFileListLine />,
+//     inputs: [
+//       "type",
+//       "stock_status",
+//       "sku",
+//       "quantity",
+//       "price",
+//       "discount",
+//       "sale_price",
+//       "wholesale_price_type",
+//       "wholesale_prices",
+//       "external_url",
+//       "external_button_text",
+//     ],
+//   },
+//   {
+//     title: "Variations",
+//     icon: <RiDatabaseLine />,
+//     inputs: [
+//       "type",
+//       "stock_status",
+//       "sku",
+//       "quantity",
+//       "price",
+//       "sale_price",
+//       "show_stock_quantity",
+//       "discount",
+//       "visible_time",
+//       "variations",
+//       "is_licensable",
+//       "is_licensekey_auto",
+//       "separator",
+//       "license_key",
+//     ],
+//   },
+//   {
+//     title: "Digital Product",
+//     icon: <RiComputerLine />,
+//     inputs: [
+//       "is_licensable",
+//       "is_licensekey_auto",
+//       "separator",
+//       "license_key",
+//       "preview_audio_file_id",
+//       "preview_type",
+//       "preview_video_file_id",
+//       "preview_url",
+//     ],
+//   },
+//   {
+//     title: "Setup",
+//     icon: <RiToolsLine />,
+//     inputs: [
+//       "is_sale_enable",
+//       "sale_starts_at",
+//       "sale_expired_at",
+//       "unit",
+//       "tags",
+//       "brand_id",
+//       "is_random_related_products",
+//       "related_products",
+//       "categories",
+//       "cross_sell_products",
+//       "cross_sell_product_id",
+//     ],
+//   },
+//   {
+//     title: "SEO",
+//     icon: <RiEarthLine />,
+//     inputs: ["meta_title", "meta_description ", "product_meta_image"],
+//   },
+//   {
+//     title: "Shipping",
+//     icon: <RiTruckLine />,
+//     inputs: [
+//       "is_free_shipping",
+//       "is_return",
+//       "estimated_delivery_text",
+//       "return_policy_text",
+//       "weight",
+//     ],
+//   },
+//   {
+//     title: "Status",
+//     icon: <RiCheckboxCircleLine />,
+//     inputs: [
+//       "is_featured",
+//       "safe_checkout",
+//       "secure_checkout",
+//       "social_share",
+//       "encourage_order",
+//       "encourage_view",
+//       "is_trending",
+//       "status",
+//     ],
+//   },
+// ];
+
+//
 export const ProductTabTitleListData = [
   {
     title: "General",
     icon: <RiSettingsLine />,
-    inputs: ["product_type", "store_id", "name", "description", "short_description", "description", "tax_id"],
+    inputs: [
+      "product_name",
+      "category_id", // Replaces 'categories' and 'store_id'
+      "brand_id",
+      "status",
+    ],
   },
   {
-    title: "Product Images",
+    title: "Content & Policies", // New tab
+    icon: <RiFileList2Line />,
+    inputs: [
+      "product_policies", // This will be an object of fields
+      "internal_notes",
+    ],
+  },
+  {
+    title: "Media", // Replaces "Product Images"
     icon: <RiImageLine />,
-    inputs: ["product_thumbnail", "product_thumbnail_id", "size_chart_image", "size_chart_image_id", "product_galleries", "product_galleries_id", "watermark", "watermark_position", "watermark_image_id"],
+    inputs: [
+      "media", // This will be the new uploader
+    ],
   },
   {
-    title: "Inventory",
-    icon: <RiFileListLine />,
-    inputs: ["type", "stock_status", "sku", "quantity", "price", "discount", "sale_price", "wholesale_price_type", "wholesale_prices", "external_url", "external_button_text"],
-  },
-  {
-    title: "Variations",
+    title: "Taxonomy", // New tab
     icon: <RiDatabaseLine />,
-    inputs: ["type", "stock_status", "sku", "quantity", "price", "sale_price", "show_stock_quantity", "discount", "visible_time", "variations", "is_licensable", "is_licensekey_auto", "separator", "license_key"],
+    inputs: [
+      "attribute_values", // For linking attributes
+      "variant_values",   // For defining variants
+    ],
   },
   {
-    title: "Digital Product",
-    icon: <RiComputerLine />,
-    inputs: ["is_licensable", "is_licensekey_auto", "separator", "license_key", "preview_audio_file_id", "preview_type", "preview_video_file_id", "preview_url"],
-  },
-  {
-    title: "Setup",
+    title: "Related Products", // Simplified from "Setup"
     icon: <RiToolsLine />,
-    inputs: ["is_sale_enable", "sale_starts_at", "sale_expired_at", "unit", "tags", "brand_id", "is_random_related_products", "related_products", "categories", "cross_sell_products", "cross_sell_product_id"],
+    inputs: [
+      "related_products",
+      "cross_sell_products",
+    ],
   },
   {
     title: "SEO",
     icon: <RiEarthLine />,
-    inputs: ["meta_title", "meta_description ", "product_meta_image"],
-  },
-  {
-    title: "Shipping",
-    icon: <RiTruckLine />,
-    inputs: ["is_free_shipping", "is_return", "estimated_delivery_text", "return_policy_text", "weight"],
-  },
-  {
-    title: "Status",
-    icon: <RiCheckboxCircleLine />,
-    inputs: ["is_featured", "safe_checkout", "secure_checkout", "social_share", "encourage_order", "encourage_view", "is_trending", "status"],
+    inputs: [
+      "seo_meta_title", 
+      "seo_meta_description"
+    ],
   },
 ];
+
 export const CouponTabTitleListData = [
   {
     title: "General",
@@ -139,7 +309,10 @@ export const SettingProductLayoutOptions = [
   { id: "product_no_sidebar", name: "ProductNoSidebar" },
   { id: "vertical_tab", name: "VerticalTab" },
   { id: "product_column_thumbnail", name: "ProductColumnThumbnail" },
-  { id: "product_thumbnail_image_outside", name: "ProductThumbnailImageOutside" },
+  {
+    id: "product_thumbnail_image_outside",
+    name: "ProductThumbnailImageOutside",
+  },
 ];
 
 export const ThemeOptionTabTitleListData = [
@@ -200,47 +373,137 @@ export const SettingPaymentMethodTab = [
   {
     key: "PaypalProvider",
     title: "Paypal",
-    inputs: ["site_title", "site_tagline", "default_timezone", "default_currency", "default_language", "min_order_amount", "front_site_langauge_direction", "admin_site_langauge_direction", "store_prefix", "copyright"],
+    inputs: [
+      "site_title",
+      "site_tagline",
+      "default_timezone",
+      "default_currency",
+      "default_language",
+      "min_order_amount",
+      "front_site_langauge_direction",
+      "admin_site_langauge_direction",
+      "store_prefix",
+      "copyright",
+    ],
   },
   {
     key: "StripeProvider",
     title: "Stripe",
-    inputs: ["catalog_enable", "maintenance", "vendor_activation", "product_auto_approve", "wallet_enable", "coupon_enable", "stock_product_hide"],
+    inputs: [
+      "catalog_enable",
+      "maintenance",
+      "vendor_activation",
+      "product_auto_approve",
+      "wallet_enable",
+      "coupon_enable",
+      "stock_product_hide",
+    ],
   },
   {
     key: "CcAvenueProvider",
     title: "Ccavenue",
-    inputs: ["catalog_enable", "maintenance", "vendor_activation", "product_auto_approve", "wallet_enable", "coupon_enable", "stock_product_hide"],
+    inputs: [
+      "catalog_enable",
+      "maintenance",
+      "vendor_activation",
+      "product_auto_approve",
+      "wallet_enable",
+      "coupon_enable",
+      "stock_product_hide",
+    ],
   },
   {
     key: "RazorpayProvider",
     title: "Razorpay",
-    inputs: ["mail_mailer", "mail_host", "mail_port", "mail_username", "mail_password", "mail_encryption", "mail_from_address", "mail_from_name", "mailgun_domain", "mailgun_secret"],
+    inputs: [
+      "mail_mailer",
+      "mail_host",
+      "mail_port",
+      "mail_username",
+      "mail_password",
+      "mail_encryption",
+      "mail_from_address",
+      "mail_from_name",
+      "mailgun_domain",
+      "mailgun_secret",
+    ],
   },
   {
     key: "CashOnDeliveryProvider",
     title: "COD",
-    inputs: ["mail_mailer", "mail_host", "mail_port", "mail_username", "mail_password", "mail_encryption", "mail_from_address", "mail_from_name", "mailgun_domain", "mailgun_secret"],
+    inputs: [
+      "mail_mailer",
+      "mail_host",
+      "mail_port",
+      "mail_username",
+      "mail_password",
+      "mail_encryption",
+      "mail_from_address",
+      "mail_from_name",
+      "mailgun_domain",
+      "mailgun_secret",
+    ],
   },
   {
     key: "MollieProvider",
     title: "Mollie",
-    inputs: ["mail_mailer", "mail_host", "mail_port", "mail_username", "mail_password", "mail_encryption", "mail_from_address", "mail_from_name", "mailgun_domain", "mailgun_secret"],
+    inputs: [
+      "mail_mailer",
+      "mail_host",
+      "mail_port",
+      "mail_username",
+      "mail_password",
+      "mail_encryption",
+      "mail_from_address",
+      "mail_from_name",
+      "mailgun_domain",
+      "mailgun_secret",
+    ],
   },
   {
     key: "InstaMojoProvider",
     title: "Instamojo",
-    inputs: ["mail_mailer", "mail_host", "mail_port", "mail_username", "mail_password", "mail_encryption", "mail_from_address", "mail_from_name", "mailgun_domain", "mailgun_secret"],
+    inputs: [
+      "mail_mailer",
+      "mail_host",
+      "mail_port",
+      "mail_username",
+      "mail_password",
+      "mail_encryption",
+      "mail_from_address",
+      "mail_from_name",
+      "mailgun_domain",
+      "mailgun_secret",
+    ],
   },
   {
     key: "PhonepeProvider",
     title: "Phonepe",
-    inputs: ["mail_mailer", "mail_host", "mail_port", "mail_username", "mail_password", "mail_encryption", "mail_from_address", "mail_from_name", "mailgun_domain", "mailgun_secret"],
+    inputs: [
+      "mail_mailer",
+      "mail_host",
+      "mail_port",
+      "mail_username",
+      "mail_password",
+      "mail_encryption",
+      "mail_from_address",
+      "mail_from_name",
+      "mailgun_domain",
+      "mailgun_secret",
+    ],
   },
   {
     key: "bkashProvider",
     title: "bkash",
-    inputs: ["title", "status", "app_key", "password", "username", "app_secret", "sandbox_mode"],
+    inputs: [
+      "title",
+      "status",
+      "app_key",
+      "password",
+      "username",
+      "app_secret",
+      "sandbox_mode",
+    ],
   },
   {
     key: "paystackProvider",
@@ -255,7 +518,14 @@ export const SettingPaymentMethodTab = [
   {
     key: "flutter_waveProvider",
     title: "flutter_wave",
-    inputs: ["title", "status", "public_key", "secret_key", "sandbox_mod", "secret_hash"],
+    inputs: [
+      "title",
+      "status",
+      "public_key",
+      "secret_key",
+      "sandbox_mod",
+      "secret_hash",
+    ],
   },
   {
     key: "bank_transferProvider",
@@ -421,6 +691,7 @@ export const BlogTypeOption = [
 
 export const AccountTab = [
   { title: "ProfileSetting", icon: <RiAccountBoxLine /> },
+  { title: "Addresses", icon: <RiMapPinLine /> }, // Added this line
   { title: "ChangePassword", icon: <RiPhoneLockLine /> },
 ];
 
@@ -467,13 +738,29 @@ export const cairoHomePageTitle = [
   { title: "NewsLetter", icon: <RiRecordCircleLine /> },
 ];
 
-export const ThemeOneHomeHorizontalTab = [{ title: "MainBanner" }, { title: "SubBanner1" }, { title: "SubBanner2" }];
+export const ThemeOneHomeHorizontalTab = [
+  { title: "MainBanner" },
+  { title: "SubBanner1" },
+  { title: "SubBanner2" },
+];
 
-export const ThemeOneMainHorizontalTab = [{ title: "LeftSidebar" }, { title: "RightContent" }];
-export const ThemeSevenHorizontalTab = [{ title: "Slider" }, { title: "Banner" }];
-export const ThemeOneMainHorizontalTab2 = [{ title: "LeftContent" }, { title: "RightSidebar" }];
+export const ThemeOneMainHorizontalTab = [
+  { title: "LeftSidebar" },
+  { title: "RightContent" },
+];
+export const ThemeSevenHorizontalTab = [
+  { title: "Slider" },
+  { title: "Banner" },
+];
+export const ThemeOneMainHorizontalTab2 = [
+  { title: "LeftContent" },
+  { title: "RightSidebar" },
+];
 
-export const ThemeSixMainHorizontalTab = [{ title: "LeftContent" }, { title: "RightSidebar" }];
+export const ThemeSixMainHorizontalTab = [
+  { title: "LeftContent" },
+  { title: "RightSidebar" },
+];
 
 export const HomePage3SetttingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -488,7 +775,10 @@ export const HomePage3SetttingTitle = [
   { title: "NewsLetter", icon: <RiRecordCircleLine /> },
 ];
 
-export const ThemeThreeHomeHorizontalTab = [{ title: "MainBanner" }, { title: "SubBanner1" }];
+export const ThemeThreeHomeHorizontalTab = [
+  { title: "MainBanner" },
+  { title: "SubBanner1" },
+];
 
 export const HomePage2SettingTab = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -501,11 +791,17 @@ export const HomePage2SettingTab = [
   { title: "NewsLetter", icon: <RiRecordCircleLine /> },
 ];
 
-export const MainRightSidebarBannerTab = [{ title: "Banner1" }, { title: "Banner2" }];
+export const MainRightSidebarBannerTab = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const SliderProduct9Title = [{ title: "Banner" }, { title: "Slider" }];
 
-export const ProductWithDealTab = [{ title: "ProductList" }, { title: "DealofDays" }];
+export const ProductWithDealTab = [
+  { title: "ProductList" },
+  { title: "DealofDays" },
+];
 
 export const HomePage4SettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -539,7 +835,9 @@ export const HomePage5SettingTitle = [
   { title: "FeaturesBlogs", icon: <RiRecordCircleLine /> },
 ];
 
-export const HomePage8SettingTitle = [{ title: "MainContent", icon: <RiRecordCircleLine /> }];
+export const HomePage8SettingTitle = [
+  { title: "MainContent", icon: <RiRecordCircleLine /> },
+];
 
 export const HomePage6SettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -562,9 +860,22 @@ export const HomePage9SettingTitle = [
   { title: "NewsLetter", icon: <RiRecordCircleLine /> },
 ];
 
-export const SellerDashboardTitles = [{ title: "About" }, { title: "Services" }, { title: "Steps" }, { title: "Selling" }];
-export const AboutUsTabTitle = [{ title: "About" }, { title: "Team" }, { title: "Testimonial" }];
-export const popUpTabTitle = [{ title: "NewsLetter" }, { title: "Exit" }, { title: "Auth" }];
+export const SellerDashboardTitles = [
+  { title: "About" },
+  { title: "Services" },
+  { title: "Steps" },
+  { title: "Selling" },
+];
+export const AboutUsTabTitle = [
+  { title: "About" },
+  { title: "Team" },
+  { title: "Testimonial" },
+];
+export const popUpTabTitle = [
+  { title: "NewsLetter" },
+  { title: "Exit" },
+  { title: "Auth" },
+];
 
 export const SellerAboutStore = [
   { value: "basic_store", title: "BasicStore", img: basicSeller },
@@ -686,21 +997,61 @@ export const FashionSevenSettingTitle = [
   { title: "OfferBanner", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const FashionOneFeatureBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const FashionOneFeatureBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
-export const FashionTwoFeatureBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }, { title: "Banner4" }];
+export const FashionTwoFeatureBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+  { title: "Banner4" },
+];
 
-export const FashionFourFeatureBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
-export const FashionFourProductListTitle = [{ title: "Categories" }, { title: "Products" }];
+export const FashionFourFeatureBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
+export const FashionFourProductListTitle = [
+  { title: "Categories" },
+  { title: "Products" },
+];
 
-export const FashionFiveKnockoutDealsTitle = [{ title: "MainBanner" }, { title: "GridBanner1" }, { title: "GridBanner2" }, { title: "GridBanner3" }];
+export const FashionFiveKnockoutDealsTitle = [
+  { title: "MainBanner" },
+  { title: "GridBanner1" },
+  { title: "GridBanner2" },
+  { title: "GridBanner3" },
+];
 
-export const FashionSixBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }, { title: "Banner4" }, { title: "Banner 5" }, { title: "Banner 6" }];
-export const FashionSixProductList2Title = [{ title: "ProductList" }, { title: "RightPanel" }];
+export const FashionSixBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+  { title: "Banner4" },
+  { title: "Banner 5" },
+  { title: "Banner 6" },
+];
+export const FashionSixProductList2Title = [
+  { title: "ProductList" },
+  { title: "RightPanel" },
+];
 
-export const FashionSevenProductList2Title = [{ title: "LeftPanel" }, { title: "ProductList" }];
-export const FashionSevenBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
-export const FashionSevenCollectionBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const FashionSevenProductList2Title = [
+  { title: "LeftPanel" },
+  { title: "ProductList" },
+];
+export const FashionSevenBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
+export const FashionSevenCollectionBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const FurnitureOneSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -710,7 +1061,11 @@ export const FurnitureOneSettingTitle = [
   { title: "FeaturedBlogs", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const FurnitureOneOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const FurnitureOneOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const FurnitureTwoSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -723,10 +1078,24 @@ export const FurnitureTwoSettingTitle = [
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
 
-export const FurnitureTwoFeatureBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
-export const FurnitureTwoProductListTitle = [{ title: "ProductList" }, { title: "RightContent" }];
-export const FurnitureTwoProductListOfferBannersTitle = [{ title: "Banner1" }, { title: "Banner2" }];
-export const FurnitureTwoBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const FurnitureTwoFeatureBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
+export const FurnitureTwoProductListTitle = [
+  { title: "ProductList" },
+  { title: "RightContent" },
+];
+export const FurnitureTwoProductListOfferBannersTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
+export const FurnitureTwoBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const FurnitureDarkSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -739,9 +1108,16 @@ export const FurnitureDarkSettingTitle = [
   { title: "FeaturedBlogs", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const FurnitureDarkBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const FurnitureDarkBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
-export const FurnitureDarkProductList2Title = [{ title: "LeftContent" }, { title: "ProductList" }];
+export const FurnitureDarkProductList2Title = [
+  { title: "LeftContent" },
+  { title: "ProductList" },
+];
 
 export const ElectronicsOneSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -757,7 +1133,11 @@ export const ElectronicsTwoSettingTitle = [
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
 
-export const ElectronicsTwoHomeBannerTitle = [{ title: "MainBanner" }, { title: "HomeBanner1" }, { title: "HomeBanner2" }];
+export const ElectronicsTwoHomeBannerTitle = [
+  { title: "MainBanner" },
+  { title: "HomeBanner1" },
+  { title: "HomeBanner2" },
+];
 
 export const ElectronicsThreeSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -770,9 +1150,20 @@ export const ElectronicsThreeSettingTitle = [
   { title: "CategoryProduct2", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const ElectronicThreeBannerTitle = [{ title: "MainBanner" }, { title: "GridBanner1" }, { title: "GridBanner2" }, { title: "GridBanner3" }];
-export const ElectronicThreeProductList2Title = [{ title: "Categories" }, { title: "Products" }];
-export const ElectronicThreeCollectionBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const ElectronicThreeBannerTitle = [
+  { title: "MainBanner" },
+  { title: "GridBanner1" },
+  { title: "GridBanner2" },
+  { title: "GridBanner3" },
+];
+export const ElectronicThreeProductList2Title = [
+  { title: "Categories" },
+  { title: "Products" },
+];
+export const ElectronicThreeCollectionBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const MarketplaceOneSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -784,8 +1175,16 @@ export const MarketplaceOneSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const MarketplaceOneOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }, { title: "Banner4" }];
-export const MarketplaceOneProductList2Title = [{ title: "LeftContent" }, { title: "RightContent" }];
+export const MarketplaceOneOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+  { title: "Banner4" },
+];
+export const MarketplaceOneProductList2Title = [
+  { title: "LeftContent" },
+  { title: "RightContent" },
+];
 
 export const MarketplaceThreeSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -794,9 +1193,19 @@ export const MarketplaceThreeSettingTitle = [
   { title: "FeaturedBlog", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const MarketplaceThreeOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
-export const MarketplaceCategoryProductOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
-export const MarketplaceThreeCategoriesAndProductTitle = [{ title: "LeftContent" }, { title: "RightContent" }];
+export const MarketplaceThreeOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
+export const MarketplaceCategoryProductOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
+export const MarketplaceThreeCategoriesAndProductTitle = [
+  { title: "LeftContent" },
+  { title: "RightContent" },
+];
 
 export const MarketplaceTwoSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -813,8 +1222,16 @@ export const MarketplaceTwoSettingTitle = [
   { title: "OfferBanner3", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const MarketplaceTwoOfferBanner2Title = [{ title: "Banner1" }, { title: "Banner2" }];
-export const MarketplaceTwoOfferBanner1Title = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }, { title: "Banner4" }];
+export const MarketplaceTwoOfferBanner2Title = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
+export const MarketplaceTwoOfferBanner1Title = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+  { title: "Banner4" },
+];
 
 export const MarketplaceFourSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -829,8 +1246,15 @@ export const MarketplaceFourSettingTitle = [
   { title: "Brand", icon: <RiRecordCircleLine /> },
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
 ];
-export const MarketplaceFourProductBanner1Title = [{ title: "LeftContent" }, { title: "Right Content" }];
-export const MarketplaceFourProductAndBannerTitle = [{ title: "LeftContent" }, { title: "CenterContent" }, { title: "RightContent" }];
+export const MarketplaceFourProductBanner1Title = [
+  { title: "LeftContent" },
+  { title: "Right Content" },
+];
+export const MarketplaceFourProductAndBannerTitle = [
+  { title: "LeftContent" },
+  { title: "CenterContent" },
+  { title: "RightContent" },
+];
 
 export const VegetableOneSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -902,7 +1326,11 @@ export const JewelleryTwoSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const JewelleryTwoProductBannerTitle = [{ title: "LeftContent" }, { title: "CenterContent" }, { title: "RightContent" }];
+export const JewelleryTwoProductBannerTitle = [
+  { title: "LeftContent" },
+  { title: "CenterContent" },
+  { title: "RightContent" },
+];
 
 export const JewelleryThreeSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -916,7 +1344,11 @@ export const JewelleryThreeSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const JewelleryThreeOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const JewelleryThreeOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const BagHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -931,7 +1363,11 @@ export const BagHomePageSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const BagOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const BagOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const MedicalHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -943,7 +1379,12 @@ export const MedicalHomePageSettingTitle = [
   { title: "Services", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const MedicalColumnBannerProductTitle = [{ title: "OfferBanner1" }, { title: "ProductList1" }, { title: "OfferBanner2" }, { title: "ProductList2" }];
+export const MedicalColumnBannerProductTitle = [
+  { title: "OfferBanner1" },
+  { title: "ProductList1" },
+  { title: "OfferBanner2" },
+  { title: "ProductList2" },
+];
 
 export const PerfumeHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -954,12 +1395,24 @@ export const PerfumeHomePageSettingTitle = [
   { title: "OfferBanner2", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const PerfumeOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }, { title: "Banner4" }];
-export const PerfumeProductListTitle = [{ title: "ProductList" }, { title: "LeftContent" }];
+export const PerfumeOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+  { title: "Banner4" },
+];
+export const PerfumeProductListTitle = [
+  { title: "ProductList" },
+  { title: "LeftContent" },
+];
 
-export const ParallaxHomePageSettingTitle = [{ title: "ParallaxBanner", icon: <RiRecordCircleLine /> }];
+export const ParallaxHomePageSettingTitle = [
+  { title: "ParallaxBanner", icon: <RiRecordCircleLine /> },
+];
 
-export const FullHomePageSettingTitle = [{ title: "HomeBanner", icon: <RiRecordCircleLine /> }];
+export const FullHomePageSettingTitle = [
+  { title: "HomeBanner", icon: <RiRecordCircleLine /> },
+];
 
 export const PetsHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -983,9 +1436,20 @@ export const YogaHomePageSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const YogaOfferBanner1Title = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
-export const YogaOfferBanner2Title = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
-export const YogaProductBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const YogaOfferBanner1Title = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
+export const YogaOfferBanner2Title = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
+export const YogaProductBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const ChristmasHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -999,7 +1463,10 @@ export const ChristmasHomePageSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const ChristmasOfferBanner1Title = [{ title: "Banner1" }, { title: "Banner2" }];
+export const ChristmasOfferBanner1Title = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const BicycleHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1024,7 +1491,11 @@ export const WatchHomePageSettingTitle = [
   { title: "Services", icon: <RiRecordCircleLine /> },
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
 ];
-export const WatchOfferBanner2Title = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const WatchOfferBanner2Title = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const NurseryHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1035,7 +1506,9 @@ export const NurseryHomePageSettingTitle = [
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
 
-export const VideoHomePageSettingTitle = [{ title: "Video", icon: <RiRecordCircleLine /> }];
+export const VideoHomePageSettingTitle = [
+  { title: "Video", icon: <RiRecordCircleLine /> },
+];
 
 export const KidsHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1046,7 +1519,10 @@ export const KidsHomePageSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const KidsHomePageOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const KidsHomePageOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const BooksHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1059,7 +1535,10 @@ export const BooksHomePageSettingTitle = [
   { title: "FeaturedBlogs", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const BooksHomePageOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const BooksHomePageOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const GameHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1071,7 +1550,10 @@ export const GameHomePageSettingTitle = [
   { title: "ProductList", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const GameHomePageOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const GameHomePageOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const BeautyHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1094,7 +1576,10 @@ export const MarijuanaHomePageSettingTitle = [
   { title: "FeaturedBlogs", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const MarijuanaOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const MarijuanaOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const GymHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1115,7 +1600,10 @@ export const ToolsHomePageSettingTitle = [
   { title: "CategoryProduct", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const ToolsCategoryProductTitle = [{ title: "LeftContent" }, { title: "RightContent" }];
+export const ToolsCategoryProductTitle = [
+  { title: "LeftContent" },
+  { title: "RightContent" },
+];
 
 export const ShoesHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1131,7 +1619,10 @@ export const ShoesHomePageSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const ShoesAboutBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const ShoesAboutBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const GogglesHomePageSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1143,7 +1634,11 @@ export const GogglesHomePageSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const GogglesOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const GogglesOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const FlowerSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1156,7 +1651,10 @@ export const FlowerSettingTitle = [
   { title: "SocialMedia ", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const FlowerOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const FlowerOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const VideoSliderSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1169,7 +1667,11 @@ export const VideoSliderSettingTitle = [
   { title: "SocialMedia ", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const VideoSliderCollectionBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }, { title: "Banner3" }];
+export const VideoSliderCollectionBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+  { title: "Banner3" },
+];
 
 export const GradientSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1183,7 +1685,10 @@ export const GradientSettingTitle = [
   { title: "SocialMedia", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const GradientParallaxBannerTitle = [{ title: "ParallaxBanner1" }, { title: "ParallaxBanner2" }];
+export const GradientParallaxBannerTitle = [
+  { title: "ParallaxBanner1" },
+  { title: "ParallaxBanner2" },
+];
 
 export const SurfingSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1194,7 +1699,10 @@ export const SurfingSettingTitle = [
   { title: "FeaturedBlogs", icon: <RiRecordCircleLine /> },
   { title: "Brand", icon: <RiRecordCircleLine /> },
 ];
-export const SurfingOfferBannerTitle = [{ title: "Banner1" }, { title: "Banner2" }];
+export const SurfingOfferBannerTitle = [
+  { title: "Banner1" },
+  { title: "Banner2" },
+];
 
 export const DigitalDownloadSettingTitle = [
   { title: "HomeBanner", icon: <RiRecordCircleLine /> },
@@ -1205,4 +1713,7 @@ export const DigitalDownloadSettingTitle = [
   { title: "FeaturedBlogs", icon: <RiRecordCircleLine /> },
 ];
 
-export const DigitalDownloadProduct2Title = [{ title: "LeftContent" }, { title: "ProductsList" }];
+export const DigitalDownloadProduct2Title = [
+  { title: "LeftContent" },
+  { title: "ProductsList" },
+];

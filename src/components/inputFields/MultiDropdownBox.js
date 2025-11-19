@@ -2,64 +2,137 @@ import { useEffect, useState } from "react";
 import { RiCloseLine } from "react-icons/ri";
 import CategoryOptions from "./CategoryOptions";
 import { useTranslation } from "react-i18next";
-import { Input } from "reactstrap"
+import { Input } from "reactstrap";
 
-const MultiDropdownBox = ({ setIsComponentVisible, data, setFieldValue, values, name, getValuesKey, isComponentVisible }) => {
-  const { t } = useTranslation('common');
+// 1. ADDED HELPER FUNCTION (Keep this)
+const getIn = (obj, path) => {
+  if (!path) return undefined;
+  return path
+    .split(".")
+    .reduce(
+      (acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined),
+      obj
+    );
+};
+
+const MultiDropdownBox = ({
+  setIsComponentVisible,
+  data,
+  setFieldValue,
+  values,
+  name,
+  getValuesKey,
+  isComponentVisible,
+}) => {
+  const { t } = useTranslation("common");
   const [path, setPath] = useState([]);
   const [showList, setShowList] = useState([]);
+
   useEffect(() => {
-    if (data) { setShowList(data) }
-    if (isComponentVisible == false) { setPath([]) }
-  }, [data, isComponentVisible])
+    if (data) {
+      setShowList(data);
+    }
+    if (isComponentVisible == false) {
+      setPath([]);
+    }
+  }, [data, isComponentVisible]);
+
+  // NEW CLOSURE LOGIC: If it's single select, the component must close
+  const handleOptionSelect = (item) => {
+    // Check if the field value is already an array (meaning it's multi-select)
+    const isMultiSelect = Array.isArray(getIn(values, name));
+
+    // If it's NOT multi-select (i.e., single select for Attribute Value), close the box immediately.
+    if (!isMultiSelect) {
+      setIsComponentVisible(false);
+    }
+  };
+
+  // (The hasValue and handleChange functions remain the same)
   const hasValue = (item, term) => {
     let valueToReturn = false;
-    if (item && item["name"] && item["name"].toLowerCase().includes(term?.toLowerCase())) {
+    if (
+      item &&
+      item["name"] &&
+      item["name"].toLowerCase().includes(term?.toLowerCase())
+    ) {
       valueToReturn = true;
     }
-    if (item && item["title"] && item["title"].toLowerCase().includes(term?.toLowerCase())) {
+    if (
+      item &&
+      item["title"] &&
+      item["title"].toLowerCase().includes(term?.toLowerCase())
+    ) {
       valueToReturn = true;
     }
-    item["subcategories"]?.length && item["subcategories"].forEach((child) => {
-      if (hasValue(child, term)) {
-        valueToReturn = true
-      }
-    })
-    item["child"]?.length && item["child"].forEach((child) => {
-      if (hasValue(child, term)) {
-        valueToReturn = true
-      }
-    })
-    return valueToReturn
-  }
+    item["subcategories"]?.length &&
+      item["subcategories"].forEach((child) => {
+        if (hasValue(child, term)) {
+          valueToReturn = true;
+        }
+      });
+    item["child"]?.length &&
+      item["child"].forEach((child) => {
+        if (hasValue(child, term)) {
+          valueToReturn = true;
+        }
+      });
+    return valueToReturn;
+  };
+
   const handleChange = (event) => {
     const keyword = event.target.value;
     if (keyword !== "") {
-      const updatedData = []
-      data?.forEach(item => { hasValue(item, keyword) && updatedData.push(item) })
-      setShowList(updatedData)
+      const updatedData = [];
+      data?.forEach((item) => {
+        hasValue(item, keyword) && updatedData.push(item);
+      });
+      setShowList(updatedData);
     } else {
-      setShowList(data)
+      setShowList(data);
     }
-  }
+  };
+
   return (
-    <div className={`select-category-box ${isComponentVisible == name && data ? 'show' : ""}`}>
-      {data?.length > 5 && <Input placeholder="Search Here ..." className="search-input" onChange={handleChange} />}
-      {showList.length > 0 ?
+    <div
+      className={`select-category-box ${
+        isComponentVisible == name && data ? "show" : ""
+      }`}
+    >
+      {data?.length > 5 && (
+        <Input
+          placeholder="Search Here ..."
+          className="search-input"
+          onChange={handleChange}
+        />
+      )}
+      {showList.length > 0 ? (
         <>
           <div className="category-content">
             <nav className="category-breadcrumb" aria-label="breadcrumb">
               <ol className="breadcrumb">
-                <li className="breadcrumb-item" onClick={() => { setPath([]); setShowList(data); }}>
+                <li
+                  className="breadcrumb-item"
+                  onClick={() => {
+                    setPath([]);
+                    setShowList(data);
+                  }}
+                >
                   <a>{t("All")}</a>
                 </li>
                 {path.map((item, key) => (
-                  <li className={`breadcrumb-item ${key + 1 === path.length ? "active" : ""}`} key={key}>
+                  <li
+                    className={`breadcrumb-item ${
+                      key + 1 === path.length ? "active" : ""
+                    }`}
+                    key={key}
+                  >
                     <a
                       onClick={() => {
                         setShowList(item.subcategories ?? item.child);
                         setPath((p) => p.slice(0, key + 1));
-                      }}>
+                      }}
+                    >
                       {item.name || item.title}
                     </a>
                   </li>
@@ -71,15 +144,37 @@ const MultiDropdownBox = ({ setIsComponentVisible, data, setFieldValue, values, 
                   e.stopPropagation();
                   setPath([]);
                   setIsComponentVisible(false);
-                }}>
+                }}
+              >
                 <RiCloseLine />
               </a>
             </nav>
             <div className="category-listing">
-              <ul>{showList && <CategoryOptions data={data} level={0} showList={showList} setShowList={setShowList} setFieldValue={setFieldValue} path={path} setPath={setPath} setIsComponentVisible={setIsComponentVisible} name={name} values={values} getValuesKey={getValuesKey} />}</ul>
+              <ul>
+                {showList && (
+                  <CategoryOptions
+                    data={data}
+                    level={0}
+                    showList={showList}
+                    setShowList={setShowList}
+                    setFieldValue={setFieldValue}
+                    path={path}
+                    setPath={setPath}
+                    setIsComponentVisible={setIsComponentVisible}
+                    name={name}
+                    values={values}
+                    getValuesKey={getValuesKey}
+                    // PASS DOWN THE NEW CLOSING HANDLER
+                    onSelectAndClose={handleOptionSelect}
+                  />
+                )}
+              </ul>
             </div>
           </div>
-        </> : "No Data Found"}
+        </>
+      ) : (
+        "No Data Found"
+      )}
     </div>
   );
 };

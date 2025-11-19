@@ -14,42 +14,43 @@ const userSchema = new mongoose.Schema(
     orders_count: { type: Number, default: 0 },
     role: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Role',
-      default: null
+      ref: "Role",
+      default: null,
     },
     profile_image: { type: String, default: null },
     wallet: {
       id: { type: Number },
       consumer_id: { type: Number },
-      balance: { type: Number }
+      balance: { type: Number },
     },
     point: {
       id: { type: Number },
       consumer_id: { type: Number },
-      balance: { type: Number }
+      balance: { type: Number },
     },
     verified: { type: Boolean, default: false },
     otp: { type: Number, default: null },
     otp_expiry: { type: Date, default: null },
     password: { type: String, required: true },
-    address: { type: String, default: null },
-    city: { type: String, default: null },
-    state: { type: String, default: null },
-    country: { type: String, default: null },
-    zip: { type: String, default: null },
+
+    // --- ADDED PASSWORD RESET FIELDS ---
+    password_reset_token: { type: String, default: null },
+    password_reset_expiry: { type: Date, default: null },
+    // ---------------------------------
+
     store_name: { type: String, default: null },
     store_description: { type: String, default: null },
     isAdmin: { type: Boolean, default: false },
   },
-  { 
+  {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
   }
 );
 
 // Add virtual for ID (to match frontend expectations)
-userSchema.virtual('id').get(function() {
+userSchema.virtual("id").get(function () {
   return this._id.toHexString();
 });
 

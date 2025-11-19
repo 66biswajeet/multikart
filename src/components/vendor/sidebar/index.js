@@ -9,6 +9,7 @@ import {
   RiBarChartLine,
   RiCustomerServiceLine,
   RiUserSettingsLine,
+  RiUserLine, // <-- 1. ICON IS IMPORTED
 } from "react-icons/ri";
 
 const VendorSidebar = () => {
@@ -37,6 +38,14 @@ const VendorSidebar = () => {
     },
   ];
 
+  // --- 2. DEFINE THE ACCOUNT LINK ---
+  const accountLink = {
+    title: "My Account",
+    path: "/account", // Link back to the personal profile
+    icon: <RiUserLine />,
+  };
+  // ---------------------------------
+
   return (
     <div className="sidebar-wrapper">
       <nav className="sidebar-main">
@@ -53,6 +62,21 @@ const VendorSidebar = () => {
                 </Link>
               </li>
             ))}
+
+            {/* --- 3. ADD SEPARATOR AND LINK --- */}
+            <li className="sidebar-list">
+              <hr className="mt-3 mb-2" />
+            </li>
+            <li>
+              <Link
+                href={accountLink.path}
+                className={pathname === accountLink.path ? "active" : ""}
+              >
+                {accountLink.icon}
+                <span>{accountLink.title}</span>
+              </Link>
+            </li>
+            {/* --- END OF ADDITION --- */}
           </ul>
         </div>
       </nav>

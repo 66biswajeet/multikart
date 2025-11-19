@@ -7,7 +7,11 @@ import AccountContext from "../../helper/accountContext";
 import { updateProfile } from "../../utils/axiosUtils/API";
 import { getHelperText } from "../../utils/customFunctions/getHelperText";
 import useCreate from "../../utils/hooks/useCreate";
-import { YupObject, nameSchema, phoneSchema } from "../../utils/validation/ValidationSchemas";
+import {
+  YupObject,
+  nameSchema,
+  phoneSchema,
+} from "../../utils/validation/ValidationSchemas";
 import FileUploadField from "../inputFields/FileUploadField";
 import SearchableSelectInput from "../inputFields/SearchableSelectInput";
 import SimpleInputField from "../inputFields/SimpleInputField";
@@ -15,7 +19,14 @@ import SimpleInputField from "../inputFields/SimpleInputField";
 const ProfileSettingTab = () => {
   const { t } = useTranslation("common");
   const { accountData, setAccountContextData } = useContext(AccountContext);
-  const { isLoading } = useCreate(updateProfile, false, "/account", false);
+  // 1. Added 'mutate' to useCreate hook
+  const { mutate, isLoading } = useCreate(
+    updateProfile,
+    false,
+    "/account",
+    false
+  );
+
   return (
     <Formik
       enableReinitialize
@@ -29,7 +40,7 @@ const ProfileSettingTab = () => {
       }}
       validationSchema={YupObject({
         name: nameSchema,
-        email: nameSchema,
+        // 2. Removed email validation since it's disabled
         phone: phoneSchema,
       })}
       onSubmit={(values) => {
@@ -37,17 +48,65 @@ const ProfileSettingTab = () => {
         if (values["profile_image"] == "") {
           values["profile_image_id"] = null;
         }
-        setAccountContextData({ name: values["name"], image: values["profile_image"] });
-        // Put Add Or Update Logic Here
+
+        // 3. Remove email from submission and call mutate
+        const { email, ...submitData } = values;
+        mutate(submitData);
+
+        setAccountContextData({
+          name: values["name"],
+          image: values["profile_image"],
+        });
       }}
     >
       {({ values, setFieldValue, errors }) => (
         <Form className="theme-form theme-form-2 mega-form row">
-          <FileUploadField name="profile_image_id" uniquename={values?.profile_image} errors={errors} id="profile_image_id" title="Avatar" type="file" values={values} setFieldValue={setFieldValue} helpertext={getHelperText("500x100px")} />
-          <SimpleInputField nameList={[{ name: "name", title: "Name", require: "true", placeholder: t("EnterName") }]} />
-          <SimpleInputField nameList={[{ name: "email", title: "Email", require: "true", placeholder: t("EnterEmail") }]} />
+          <FileUploadField
+            name="profile_image_id"
+            uniquename={values?.profile_image}
+            errors={errors}
+            id="profile_image_id"
+            title="Avatar"
+            type="file"
+            values={values}
+            setFieldValue={setFieldValue}
+            helpertext={getHelperText("500x100px")}
+          />
+          <SimpleInputField
+            nameList={[
+              {
+                name: "name",
+                title: "Name",
+                require: "true",
+                placeholder: t("EnterName"),
+              },
+            ]}
+          />
+
+          {/* 4. Added 'disabled: true' to the email field */}
+          <SimpleInputField
+            nameList={[
+              {
+                name: "email",
+                title: "Email",
+                require: "true",
+                placeholder: t("EnterEmail"),
+                disabled: true,
+              },
+            ]}
+          />
+
           <div className="country-input mb-4">
-            <SimpleInputField nameList={[{ name: "phone", title: "Phone", require: "true", type: "number" }]} />
+            <SimpleInputField
+              nameList={[
+                {
+                  name: "phone",
+                  title: "Phone",
+                  require: "true",
+                  type: "number",
+                },
+              ]}
+            />
             <SearchableSelectInput
               nameList={[
                 {
@@ -62,7 +121,13 @@ const ProfileSettingTab = () => {
               ]}
             />
           </div>
-          <Btn className="btn btn-theme ms-auto d-inline-block w-auto" type="submit" title="Save"  />
+          {/* 5. Added 'loading' prop to the button */}
+          <Btn
+            className="btn btn-theme ms-auto d-inline-block w-auto"
+            type="submit"
+            title="Save"
+            loading={Number(isLoading)}
+          />
         </Form>
       )}
     </Formik>

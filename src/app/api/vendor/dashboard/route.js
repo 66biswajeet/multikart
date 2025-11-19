@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Store from "@/models/Store";
 import Product from "@/models/Products";
+import User from "@/models/User";
 import { extractAuthFromRequest } from "@/utils/auth/serverAuth";
 
 export async function GET(request) {

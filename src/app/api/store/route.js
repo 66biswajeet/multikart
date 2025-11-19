@@ -14,6 +14,12 @@ import { requireAdmin } from "@/utils/auth/serverAuth";
 // GET - Get all stores with filtering
 export async function GET(request) {
   try {
+    // Add admin authentication check
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
+    }
+    // --- END OF FIX ---
     await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;

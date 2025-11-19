@@ -10,16 +10,24 @@ const client = axios.create({
 });
 
 const request = async ({ ...options }, router) => {
-  client.defaults.headers.common.Authorization = `Bearer ${getCookie("uat")}`;
-  
+  // client.defaults.headers.common.Authorization = `Bearer ${getCookie("uat")}`;
+  const token = getCookie("uat");
+  if (token) {
+    // Add the token to this specific request's options
+    options.headers = {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
   // If data is FormData, set proper content type
   if (options.data instanceof FormData) {
     options.headers = {
       ...options.headers,
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     };
   }
-  
+
   const onSuccess = (response) => response;
   const onError = (error) => {
     if (error?.response?.status == 401) {

@@ -37,9 +37,20 @@ const Footer = () => {
   const handleBecomeVendor = () => {
     if (!accountData) {
       router.push("/auth/login");
+      return;
+    }
+
+    // --- THIS IS THE FIX ---
+    // Check the vendor status and redirect accordingly
+    const vendorStatus = accountData?.store?.vendor_status;
+
+    if (vendorStatus === "Approved") {
+      router.push("/vendor/dashboard");
     } else {
+      // This will send new, pending, or rejected vendors to the registration page
       router.push("/vendor/register");
     }
+    // --- END OF FIX ---
   };
 
   return (
