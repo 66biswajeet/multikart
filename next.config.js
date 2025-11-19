@@ -3,8 +3,8 @@ const nextConfig = {
   reactStrictMode: false,
   env: {
     // Replace below URL with your current Domain 
-    API_PROD_URL: "http://localhost:3000/api/",
-    storageURL: "http://localhost:3000/assets", 
+    API_PROD_URL: process.env.API_PROD_URL,
+    storageURL: process.env.STORAGE_URL, 
   },
   redirects: async () => {
     return [
