@@ -2,8 +2,9 @@ import { ErrorMessage } from "formik";
 import { RiCloseLine } from "react-icons/ri";
 import { handleModifier } from "../../utils/validation/ModifiedErrorMessage";
 import { useTranslation } from "react-i18next";
+import React from "react";
 
-// 1. ADD THIS HELPER FUNCTION (Keep this section)
+// helper to read nested values (safe)
 const getIn = (obj, path) => {
   if (!path) return undefined;
   return path
@@ -14,18 +15,82 @@ const getIn = (obj, path) => {
     );
 };
 
-const MultiSelectInput = ({
+// helper to find an item (search nested children)
+const findItemByValue = (items = [], value, key = "id") => {
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const itemVal = it[key] ?? it._id ?? it.id;
+    if (String(itemVal) === String(value)) return it;
+    if (it.subcategories?.length) {
+      const f = findItemByValue(it.subcategories, value, key);
+      if (f) return f;
+    }
+    if (it.child?.length) {
+      const f2 = findItemByValue(it.child, value, key);
+      if (f2) return f2;
+    }
+  }
+  return null;
+};
+
+// Build visible label(s) for the selected value(s)
+const buildDisplayText = ({
+  selectedItems = [],
   values,
   name,
-  selectedItems,
+  data = [],
+  getValuesKey = "id",
+}) => {
+  // prefer objects passed as selectedItems
+  if (Array.isArray(selectedItems) && selectedItems.length > 0) {
+    return selectedItems
+      .map((it) => it?.name || it?.title || "")
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  // fallback to reading Formik value
+  const current = getIn(values, name);
+
+  if (Array.isArray(current) && current.length > 0) {
+    const labels = current.map((val) => {
+      const found = findItemByValue(data, val, getValuesKey);
+      return found ? found.name || found.title || String(val) : String(val);
+    });
+    return labels.join(", ");
+  }
+
+  if (current !== undefined && current !== null && current !== "") {
+    const found = findItemByValue(data, current, getValuesKey);
+    return found
+      ? found.name || found.title || String(current)
+      : String(current);
+  }
+
+  return "";
+};
+
+const MultiSelectInput = ({
+  initialTittle,
+  values,
+  name,
+  data,
+  selectedItems = [],
   setIsComponentVisible,
   setFieldValue,
   setSelectedItems,
   errors,
-  getValuesKey,
-  initialTittle,
+  getValuesKey = "id",
 }) => {
   const { t } = useTranslation("common");
+
+  const displayText = buildDisplayText({
+    selectedItems,
+    values,
+    name,
+    data,
+    getValuesKey,
+  });
 
   // This is the function that removes the pill when the 'X' is clicked
   const RemoveSelectedItem = (id, item) => {
@@ -44,16 +109,6 @@ const MultiSelectInput = ({
     }
   };
 
-  // 2. THIS IS THE CRUCIAL LOGIC FOR DISPLAYING THE PILLS
-
-  // Get the safely accessed value once for performance
-  const fieldValue = getIn(values, name);
-
-  // Determine if the field has any value (either an array with items or a single string)
-  const hasValue =
-    (Array.isArray(fieldValue) && fieldValue.length > 0) ||
-    (!Array.isArray(fieldValue) && fieldValue);
-
   return (
     <>
       <div
@@ -61,7 +116,7 @@ const MultiSelectInput = ({
         onClick={() => setIsComponentVisible((p) => p !== name && name)}
       >
         {/* Check if we should display selected items */}
-        {hasValue && selectedItems?.length > 0 ? (
+        {displayText && selectedItems?.length > 0 ? (
           selectedItems?.map((item, i) => (
             <span className="tag label label-info" key={i}>
               {/* Ensure we display name/title for pills */}

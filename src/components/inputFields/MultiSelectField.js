@@ -6,7 +6,6 @@ import MultiSelectInput from "./MultiSelectInput";
 
 // 1. ADD THIS HELPER FUNCTION
 // This function allows us to read nested values from an object
-// (e.g., getIn(values, "attribute_mapping.0.attribute_id"))
 const getIn = (obj, path) => {
   if (!path) return undefined;
   return path
@@ -26,6 +25,7 @@ const MultiSelectField = ({
   errors,
   helpertext,
   initialTittle,
+  isMulti, // Check if the field is explicitly marked as multi-select
 }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const { ref, isComponentVisible, setIsComponentVisible } =
@@ -34,17 +34,18 @@ const MultiSelectField = ({
   const SelectedItemFunction = (data) => {
     if (!data || !Array.isArray(data)) return;
 
-    // 2. THIS IS THE FIX
-    // Replace values[name] with getIn(values, name) to read nested paths
+    // 2. FIX: Read the nested value safely
     const currentValue = getIn(values, name);
 
-    const currentValues = Array.isArray(currentValue)
-      ? currentValue
-      : currentValue !== undefined &&
-        currentValue !== null &&
-        currentValue !== ""
-      ? [currentValue]
-      : [];
+    // Determine if it's an array for multi-select, or a single value wrapped in an array
+    const currentValues =
+      Array.isArray(currentValue) && isMulti
+        ? currentValue
+        : currentValue !== undefined &&
+          currentValue !== null &&
+          currentValue !== ""
+        ? [currentValue] // Wrap single value in array for internal processing
+        : [];
 
     const selectedItems = [];
 
@@ -77,10 +78,11 @@ const MultiSelectField = ({
     setSelectedItems(selectedItems);
   };
 
+  // 3. Dependency array uses getIn to trigger re-calculation when Formik state changes
   useEffect(() => {
     setSelectedItems([]);
     SelectedItemFunction(data);
-  }, [getIn(values, name), data]); // 3. Use getIn here too
+  }, [getIn(values, name), data, isMulti]);
 
   return (
     <div className="category-select-box" ref={ref}>
@@ -105,6 +107,7 @@ const MultiSelectField = ({
         name={name}
         getValuesKey={getValuesKey}
         isComponentVisible={isComponentVisible}
+        isMulti={isMulti} // Pass down the multi-select flag
       />
     </div>
   );

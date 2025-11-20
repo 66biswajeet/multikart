@@ -13,10 +13,13 @@ const getIn = (obj, path) => {
     );
 };
 
+// 1. RECEIVE THE NEW formikSetter PROP
 const CategoryOptions = ({
   data,
   showList,
   setShowList,
+  formikSetter,
+  // accept optional setFieldValue as a fallback if the caller passes it
   setFieldValue,
   setPath,
   name,
@@ -32,28 +35,47 @@ const CategoryOptions = ({
 
     const currentValue = getIn(values, name);
 
+    // prefer explicit formikSetter, fallback to setFieldValue if available
+    const setter =
+      typeof formikSetter === "function"
+        ? formikSetter
+        : typeof setFieldValue === "function"
+        ? setFieldValue
+        : null;
+
+    if (!setter) {
+      // don't throw — warn so you can trace where setter is missing
+      // still trigger onSelectAndClose so UI can respond
+      console.warn(
+        "CategoryOptions: no formikSetter or setFieldValue provided. Selection won't update form state.",
+        { name, item }
+      );
+    }
+
     if (Array.isArray(currentValue)) {
-      // For multi-select arrays (Logic unchanged)
       const hasValue = currentValue.some((val) => String(val) === itemValueStr);
       if (hasValue) {
-        setFieldValue(
-          name,
-          currentValue.filter((elem) => String(elem) !== itemValueStr)
-        );
+        if (setter) {
+          setter(
+            name,
+            currentValue.filter((elem) => String(elem) !== itemValueStr)
+          );
+        }
       } else {
-        setFieldValue(name, [...currentValue, itemValue]);
+        if (setter) {
+          setter(name, [...currentValue, itemValue]);
+        }
       }
+      // for multi-select we typically don't auto-close; still notify
+      if (typeof onSelectAndClose === "function") onSelectAndClose(item);
     } else {
-      // For single select - CRITICAL FIX
+      // For single select - use setter when available
       const currentValueStr = currentValue ? String(currentValue) : null;
-
-      // 1. Perform setFieldValue
-      setFieldValue(name, itemValueStr === currentValueStr ? null : itemValue);
-
-      // 2. Add a tiny delay before closing the dropdown to ensure Formik recognizes the value.
-      setTimeout(() => {
-        onSelectAndClose(item);
-      }, 50);
+      if (setter) {
+        setter(name, itemValueStr === currentValueStr ? null : itemValue);
+      }
+      // Trigger the closure logic immediately (if provided)
+      if (typeof onSelectAndClose === "function") onSelectAndClose(item);
     }
   };
 

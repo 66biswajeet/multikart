@@ -4,7 +4,7 @@ import CategoryOptions from "./CategoryOptions";
 import { useTranslation } from "react-i18next";
 import { Input } from "reactstrap";
 
-// 1. ADDED HELPER FUNCTION (Keep this)
+// ADDED HELPER FUNCTION (Keep this)
 const getIn = (obj, path) => {
   if (!path) return undefined;
   return path
@@ -39,10 +39,8 @@ const MultiDropdownBox = ({
 
   // NEW CLOSURE LOGIC: If it's single select, the component must close
   const handleOptionSelect = (item) => {
-    // Check if the field value is already an array (meaning it's multi-select)
     const isMultiSelect = Array.isArray(getIn(values, name));
 
-    // If it's NOT multi-select (i.e., single select for Attribute Value), close the box immediately.
     if (!isMultiSelect) {
       setIsComponentVisible(false);
     }
@@ -157,14 +155,15 @@ const MultiDropdownBox = ({
                     level={0}
                     showList={showList}
                     setShowList={setShowList}
-                    setFieldValue={setFieldValue}
+                    // FIX 1: Pass the setter explicitly under a new prop name to prevent loss
+                    formikSetter={setFieldValue}
                     path={path}
                     setPath={setPath}
                     setIsComponentVisible={setIsComponentVisible}
                     name={name}
                     values={values}
                     getValuesKey={getValuesKey}
-                    // PASS DOWN THE NEW CLOSING HANDLER
+                    // FIX 2: Pass down the new closing handler
                     onSelectAndClose={handleOptionSelect}
                   />
                 )}
