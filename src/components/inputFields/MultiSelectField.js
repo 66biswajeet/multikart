@@ -4,7 +4,7 @@ import useOutsideDropdown from "../../utils/hooks/customHooks/useOutsideDropdown
 import MultiDropdownBox from "./MultiDropdownBox";
 import MultiSelectInput from "./MultiSelectInput";
 
-// 1. ADD THIS HELPER FUNCTION
+// 1. ADD THIS HELPER 
 // This function allows us to read nested values from an object
 const getIn = (obj, path) => {
   if (!path) return undefined;
