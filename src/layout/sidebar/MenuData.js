@@ -81,6 +81,12 @@ const MENUITEMS = [
         permission: ["attribute.index", "attribute.create"],
       },
       {
+        title: "Variants",
+        path: "/variant",
+        displayTitle: "Variants",
+        permission: ["product.index", "product.create"], // Using product permissions to ensure it shows
+      },
+      {
         title: "Categories",
         path: "/category",
         displayTitle: "Categories",

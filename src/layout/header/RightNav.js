@@ -2,7 +2,14 @@ import SettingContext from "@/helper/settingContext";
 import Link from "next/link";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RiFullscreenExitLine, RiFullscreenFill, RiGlobalLine, RiMoonLine, RiSearchLine, RiSunLine } from "react-icons/ri";
+import {
+  RiFullscreenExitLine,
+  RiFullscreenFill,
+  RiGlobalLine,
+  RiMoonLine,
+  RiSearchLine,
+  RiSunLine,
+} from "react-icons/ri";
 import { Col } from "reactstrap";
 import usePermissionCheck from "../../utils/hooks/usePermissionCheck";
 import Language from "./Language";
@@ -18,14 +25,19 @@ const RightNav = ({ setMode, mode, setOpenSearchBar }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   const toggleFullScreen = () => {
-    if ((document.fullScreenElement && document.fullScreenElement !== null) || (!document.mozFullScreen && !document.webkitIsFullScreen)) {
+    if (
+      (document.fullScreenElement && document.fullScreenElement !== null) ||
+      (!document.mozFullScreen && !document.webkitIsFullScreen)
+    ) {
       setIsFullScreen((prev) => (prev = true));
       if (document.documentElement.requestFullScreen) {
         document.documentElement.requestFullScreen();
       } else if (document.documentElement.mozRequestFullScreen) {
         document.documentElement.mozRequestFullScreen();
       } else if (document.documentElement.webkitRequestFullScreen) {
-        document.documentElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+        document.documentElement.webkitRequestFullScreen(
+          Element.ALLOW_KEYBOARD_INPUT
+        );
       }
     } else {
       setIsFullScreen((prev) => (prev = false));
@@ -42,7 +54,7 @@ const RightNav = ({ setMode, mode, setOpenSearchBar }) => {
   return (
     <Col className="nav-right pull-right right-header p-0">
       <div className="header-btns d-none d-lg-flex">
-        <QuickLinks />
+        {/* <QuickLinks /> */}
         {/* {isOrderCreate && (
           <Link href={"/order/create"} className="btn btn-animation">
             {t("Pos")}
@@ -50,11 +62,14 @@ const RightNav = ({ setMode, mode, setOpenSearchBar }) => {
         )} */}
       </div>
       <ul className="nav-menus">
-        <li>
-          <span className="header-search" onClick={() => setOpenSearchBar(true)}>
+        {/* <li>
+          <span
+            className="header-search"
+            onClick={() => setOpenSearchBar(true)}
+          >
             <RiSearchLine />
           </span>
-        </li>
+        </li> */}
         {/* {settingObj?.general?.site_url && settingObj?.general?.site_url !== "" && (
           <li id="store">
             <a className="global-box" href={settingObj?.general?.site_url} target="_blank">
@@ -66,10 +81,22 @@ const RightNav = ({ setMode, mode, setOpenSearchBar }) => {
         {/* <li>
           <div className="full-screen-box">{isFullScreen ? <RiFullscreenExitLine className="header-fullscreen" onClick={toggleFullScreen} /> : <RiFullscreenFill className="header-fullscreen" onClick={toggleFullScreen} />}</div>
         </li> */}
-        <Language />
-        <NotificationBox />
+        {/* <Language /> */}
+        {/* <NotificationBox /> */}
         <li id="Mode">
-          <div className="mode">{mode == false ? <RiMoonLine className="ri-moon-line" onClick={() => setMode((prev) => !prev)} /> : <RiSunLine className="ri-sun-line" onClick={() => setMode((prev) => !prev)} />}</div>
+          <div className="mode">
+            {mode == false ? (
+              <RiMoonLine
+                className="ri-moon-line"
+                onClick={() => setMode((prev) => !prev)}
+              />
+            ) : (
+              <RiSunLine
+                className="ri-sun-line"
+                onClick={() => setMode((prev) => !prev)}
+              />
+            )}
+          </div>
           <HeaderTooltip target={"Mode"} />
         </li>
         <ProfileNav />

@@ -1,8 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { Col, Label } from "reactstrap";
-import { Field, FieldArray } from "formik";
+import { Col } from "reactstrap";
+import { FieldArray } from "formik";
 import request from "@/utils/axiosUtils";
 import { Category } from "@/utils/axiosUtils/API";
 import Loader from "../commonComponent/Loader";
@@ -12,6 +12,7 @@ import MultiSelectField from "../inputFields/MultiSelectField";
 // A helper component to render the correct input field based on attribute type
 const AttributeInput = ({ attribute, name }) => {
   const { t } = useTranslation("common");
+
   const attributeData = attribute.attribute;
 
   if (!attributeData) return null;
@@ -23,8 +24,8 @@ const AttributeInput = ({ attribute, name }) => {
     const options = attributeData.attribute_values.map((val) => ({
       id: val.value,
       name: val.value,
-      subcategories: [], // --- FIX: Add empty array to prevent crash
-      child: [], // --- FIX: Add empty array to prevent crash
+      subcategories: [],
+      child: [],
     }));
 
     return (
@@ -54,6 +55,7 @@ const AttributeInput = ({ attribute, name }) => {
 // A helper component to render variant inputs
 const VariantInput = ({ variant, name }) => {
   const { t } = useTranslation("common");
+
   const variantData = variant.variant;
 
   if (!variantData) return null;
@@ -63,8 +65,8 @@ const VariantInput = ({ variant, name }) => {
   const options = variantData.options.map((opt) => ({
     id: opt.label,
     name: opt.label,
-    subcategories: [], // --- FIX: Add empty array to prevent crash
-    child: [], // --- FIX: Add empty array to prevent crash
+    subcategories: [],
+    child: [],
   }));
 
   return (
@@ -129,26 +131,28 @@ const TaxonomyTab = ({ values, setFieldValue, errors }) => {
                 if (!attr.attribute) return null;
 
                 // Find the index of this attribute in the Formik 'values' array
-                const valueIndex = values.attribute_values.findIndex(
+                let valueIndex = values.attribute_values.findIndex(
                   (val) => val.attribute_id === attr.attribute_id
                 );
 
                 // If it's not in the array, add it (with default value)
                 if (valueIndex === -1) {
-                  setFieldValue(
-                    `attribute_values[${values.attribute_values.length}]`,
-                    {
-                      attribute_id: attr.attribute_id,
-                      value: "",
-                    }
-                  );
+                  const newIndex = values.attribute_values.length;
+                  // set the new element at next index
+                  setFieldValue(`attribute_values.${newIndex}`, {
+                    // USE DOT NOTATION
+                    attribute_id: attr.attribute_id,
+                    value: "",
+                  });
+                  // use the new index for the input name
+                  valueIndex = newIndex;
                 }
 
                 return (
                   <div key={attr.attribute_id} className="mb-3">
                     <AttributeInput
                       attribute={attr}
-                      name={`attribute_values[${valueIndex}].value`}
+                      name={`attribute_values.${valueIndex}.value`} // USE DOT NOTATION
                     />
                     {attr.is_mandatory && (
                       <small className="text-danger">{t("Mandatory")}</small>
@@ -173,25 +177,25 @@ const TaxonomyTab = ({ values, setFieldValue, errors }) => {
               {variant_mapping.map((vari, index) => {
                 if (!vari.variant) return null;
 
-                const valueIndex = values.variant_values.findIndex(
+                let valueIndex = values.variant_values.findIndex(
                   (val) => val.variant_id === vari.variant_id
                 );
 
                 if (valueIndex === -1) {
-                  setFieldValue(
-                    `variant_values[${values.variant_values.length}]`,
-                    {
-                      variant_id: vari.variant_id,
-                      options: [], // Default to an empty array
-                    }
-                  );
+                  const newIndex = values.variant_values.length;
+                  setFieldValue(`variant_values.${newIndex}`, {
+                    // USE DOT NOTATION
+                    variant_id: vari.variant_id,
+                    options: [], // Default to an empty array
+                  });
+                  valueIndex = newIndex;
                 }
 
                 return (
                   <div key={vari.variant_id} className="mb-3">
                     <VariantInput
                       variant={vari}
-                      name={`variant_values[${valueIndex}].options`}
+                      name={`variant_values.${valueIndex}.options`} // USE DOT NOTATION
                     />
                     {vari.is_mandatory && (
                       <small className="text-danger">{t("Mandatory")}</small>
