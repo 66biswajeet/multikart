@@ -4,12 +4,10 @@ import { useContext, useEffect, useState } from "react";
 import Logo from "../../components/commonComponent/logoWrapper/Logo";
 import ToggleButton from "../../components/commonComponent/logoWrapper/ToggleButton";
 import RightNav from "./RightNav";
-import SearchBar from "./SearchBar";
 
 const Header = ({ setMode, mode, setLtr, settingData }) => {
   const { state, sidebarOpen, setSidebarOpen } = useContext(SettingContext);
   const [mounted, setMounted] = useState(true);
-  const [openSearchBar, setOpenSearchBar] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
       setMounted(false);
@@ -25,11 +23,17 @@ const Header = ({ setMode, mode, setLtr, settingData }) => {
           </div>
           <ToggleButton setSidebarOpen={setSidebarOpen} />
           <a className="d-lg-none d-block mobile-logo" href="/">
-            {state?.setDarkLogo?.original_url && <Image src={state?.setDarkLogo?.original_url} height={21} width={120} alt="Dark Logo" />}
+            {state?.setDarkLogo?.original_url && (
+              <Image
+                src={state?.setDarkLogo?.original_url}
+                height={21}
+                width={120}
+                alt="Dark Logo"
+              />
+            )}
           </a>
         </div>
-        <SearchBar openSearchBar={openSearchBar} setOpenSearchBar={setOpenSearchBar} />
-        <RightNav setMode={setMode} mode={mode} setLtr={setLtr} openSearchBar={openSearchBar} setOpenSearchBar={setOpenSearchBar} />
+        <RightNav setMode={setMode} mode={mode} setLtr={setLtr} />
       </div>
     </div>
   );

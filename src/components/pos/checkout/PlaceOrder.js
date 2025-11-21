@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i-next";
+import { useTranslation } from "react-i18next";
 import Btn from "../../../elements/buttons/Btn";
 import { checkout } from "../../../utils/axiosUtils/API";
 import request from "../../../utils/axiosUtils";

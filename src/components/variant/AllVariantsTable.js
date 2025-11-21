@@ -6,8 +6,18 @@ import { useTranslation } from "react-i18next"; // Import useTranslation
 
 const AllVariantsTable = ({ data, ...props }) => {
   const { t } = useTranslation("common"); // Initialize t
-  const [edit, destroy] = usePermissionCheck(["edit", "destroy"]);
-  console.log("Permissions in variants - Edit:", edit, "Destroy:", destroy);
+  const [create, edit, destroy] = usePermissionCheck(
+    ["create", "edit", "destroy"],
+    "variant"
+  );
+  console.log(
+    "Permissions in variants - Create:",
+    create,
+    "Edit:",
+    edit,
+    "Destroy:",
+    destroy
+  );
   console.log("Variants Data:", data);
 
   const headerObj = {

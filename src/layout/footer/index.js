@@ -34,13 +34,19 @@ const Footer = () => {
   const { accountData } = useContext(AccountContext);
   const router = useRouter();
 
+  // Check if user is an admin
+  const isAdmin =
+    accountData?.role?.name === "Admin" ||
+    accountData?.role?.name === "Super Admin" ||
+    accountData?.role?.role_type === "admin" ||
+    accountData?.role?.role_type === "superadmin";
+
   const handleBecomeVendor = () => {
     if (!accountData) {
       router.push("/auth/login");
       return;
     }
 
-    // --- THIS IS THE FIX ---
     // Check the vendor status and redirect accordingly
     const vendorStatus = accountData?.store?.vendor_status;
 
@@ -50,7 +56,6 @@ const Footer = () => {
       // This will send new, pending, or rejected vendors to the registration page
       router.push("/vendor/register");
     }
-    // --- END OF FIX ---
   };
 
   return (
@@ -62,15 +67,16 @@ const Footer = () => {
               {t(state?.setCopyRight ? state?.setCopyRight : "© Pixelstrap")}
             </p>
             {(!accountData?.store ||
-              accountData?.store?.vendor_status !== "Approved") && (
-              <Button
-                color="primary"
-                className="mt-2"
-                onClick={handleBecomeVendor}
-              >
-                {t("Become a Vendor")}
-              </Button>
-            )}
+              accountData?.store?.vendor_status !== "Approved") &&
+              !isAdmin && (
+                <Button
+                  color="primary"
+                  className="mt-2"
+                  onClick={handleBecomeVendor}
+                >
+                  {t("Become a Vendor")}
+                </Button>
+              )}
           </Col>
         </Row>
       </footer>

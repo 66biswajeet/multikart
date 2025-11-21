@@ -1,15 +1,20 @@
 /**=====================
-     Footer CSS Start
+     Footer CSS Start - Modern Elegant Design
 ==========================**/
+
+// Modern Footer with Glassmorphism
 .footer {
-    background-color: $footer_bg_color;
-    box-shadow: $footer_box_shadow;
-    padding: 15px;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(14, 165, 233, 0.15);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.08);
+    padding: 20px 15px;
     position: fixed;
     bottom: 0;
     right: 0;
     width: calc(100vw - 320px);
     z-index: 2;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     @media (max-width: 1199px) {
         width: calc(100vw - 260px);
@@ -20,11 +25,72 @@
         right: 0;
     }
 
-    &.footer-dark {
-        background-color: $footer_dark_color;
+    p {
+        color: #475569;
+    }
+
+    &.footer-dark,
+    body.dark-only & {
+        background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
+        border-top-color: rgba(14, 165, 233, 0.1);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
 
         p {
             color: $white;
+        }
+    }
+}
+
+// Footer Text Styling
+.footer-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    letter-spacing: 0.3px;
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #0ea5e9;
+    }
+
+    // Dark mode
+    body.dark-only & {
+        color: rgba(255, 255, 255, 0.85);
+
+        &:hover {
+            color: #0ea5e9;
+        }
+    }
+}
+
+// Footer Vendor Button Styling
+.footer-vendor-btn {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+
+    &:hover {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4);
+        transform: translateY(-2px);
+    }
+
+    &:focus {
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25), 0 8px 20px rgba(14, 165, 233, 0.4);
+        outline: none;
+    }
+
+    // Dark mode - keep same style
+    body.dark-only & {
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+
+        &:hover {
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.5);
         }
     }
 }

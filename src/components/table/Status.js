@@ -15,33 +15,38 @@ const Status = ({ url, data, disabled, apiKey }) => {
 
   const handleClick = async (value) => {
     try {
-      // Prepare the update payload
-      const updateData = {
-        [apiKey || 'status']: value ? 1 : 0
-      };
-      
+      // For variants, use 'active' field instead of 'status'
+      const updateData = url.includes("variant")
+        ? { active: value }
+        : { [apiKey || "status"]: value ? 1 : 0 };
+
+      // For variants and other resources, ensure the URL includes /api prefix if not already there
+      const apiUrl = url.startsWith("/") ? url : `/${url}`;
+      const endpoint = apiUrl.startsWith("/api")
+        ? `${apiUrl}/${data.id || data._id}`
+        : `/api${apiUrl}/${data.id || data._id}`;
+
       // Make API call to update the status
-      const response = await fetch(`/api${url}/${data.id || data._id}`, {
-        method: 'PUT',
+      const response = await fetch(endpoint, {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
-      
+
       if (response.ok) {
         setStatus(value);
-        console.log('Status updated successfully');
-        
-        // Update the local data without page reload
-        // You could emit an event or call a callback here if needed
+        console.log("Status updated successfully");
       } else {
-        console.error('Failed to update status');
+        console.error("Failed to update status:", response.status);
         // Revert the status change if API call failed
+        setStatus(!value);
       }
     } catch (error) {
-      console.error('Status update error:', error);
+      console.error("Status update error:", error);
       // Revert the status change if API call failed
+      setStatus(!value);
     }
     setModal(false);
   };
@@ -49,7 +54,11 @@ const Status = ({ url, data, disabled, apiKey }) => {
     <>
       <FormGroup switch className="ps-0 form-switch form-check">
         <Label className="switch" onClick={() => !disabled && setModal(true)}>
-          <Input type="switch" disabled={disabled ? disabled : false} checked={status} />
+          <Input
+            type="switch"
+            disabled={disabled ? disabled : false}
+            checked={status}
+          />
           <span className={`switch-state ${disabled ? "disabled" : ""}`}></span>
         </Label>
       </FormGroup>
@@ -59,8 +68,16 @@ const Status = ({ url, data, disabled, apiKey }) => {
         setModal={setModal}
         buttons={
           <>
-            <Btn title="No" onClick={() => setModal(false)} className="btn-md btn-outline fw-bold" />
-            <Btn title="Yes" onClick={() => handleClick(!status)} className="btn-theme btn-md fw-bold" />
+            <Btn
+              title="No"
+              onClick={() => setModal(false)}
+              className="btn-md btn-outline fw-bold"
+            />
+            <Btn
+              title="Yes"
+              onClick={() => handleClick(!status)}
+              className="btn-theme btn-md fw-bold"
+            />
           </>
         }
       >

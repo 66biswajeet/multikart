@@ -18,7 +18,7 @@ import ProfileNav from "./ProfileNav";
 import QuickLinks from "./QuickLinks";
 import HeaderTooltip from "./HeaderTooltip";
 
-const RightNav = ({ setMode, mode, setOpenSearchBar }) => {
+const RightNav = ({ setMode, mode }) => {
   const { t } = useTranslation("common");
   const [isOrderCreate] = usePermissionCheck(["create"], "order");
   const { settingObj } = useContext(SettingContext);

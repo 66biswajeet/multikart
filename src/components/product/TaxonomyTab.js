@@ -10,7 +10,7 @@ import SimpleInputField from "../inputFields/SimpleInputField";
 import MultiSelectField from "../inputFields/MultiSelectField";
 
 // A helper component to render the correct input field based on attribute type
-const AttributeInput = ({ attribute, name }) => {
+const AttributeInput = ({ attribute, name, setFieldValue, values }) => {
   const { t } = useTranslation("common");
 
   const attributeData = attribute.attribute;
@@ -34,6 +34,8 @@ const AttributeInput = ({ attribute, name }) => {
         title={t(attrName)}
         data={options}
         getValuesKey="id"
+        setFieldValue={setFieldValue}
+        values={values}
       />
     );
   }
@@ -53,7 +55,7 @@ const AttributeInput = ({ attribute, name }) => {
 };
 
 // A helper component to render variant inputs
-const VariantInput = ({ variant, name }) => {
+const VariantInput = ({ variant, name, setFieldValue, values }) => {
   const { t } = useTranslation("common");
 
   const variantData = variant.variant;
@@ -76,6 +78,8 @@ const VariantInput = ({ variant, name }) => {
       data={options}
       getValuesKey="id"
       isMulti={true} // Allow selecting multiple options (e.g., Red, Blue)
+      setFieldValue={setFieldValue}
+      values={values}
     />
   );
 };
@@ -153,6 +157,8 @@ const TaxonomyTab = ({ values, setFieldValue, errors }) => {
                     <AttributeInput
                       attribute={attr}
                       name={`attribute_values.${valueIndex}.value`} // USE DOT NOTATION
+                      setFieldValue={setFieldValue}
+                      values={values}
                     />
                     {attr.is_mandatory && (
                       <small className="text-danger">{t("Mandatory")}</small>
@@ -196,6 +202,8 @@ const TaxonomyTab = ({ values, setFieldValue, errors }) => {
                     <VariantInput
                       variant={vari}
                       name={`variant_values.${valueIndex}.options`} // USE DOT NOTATION
+                      setFieldValue={setFieldValue}
+                      values={values}
                     />
                     {vari.is_mandatory && (
                       <small className="text-danger">{t("Mandatory")}</small>

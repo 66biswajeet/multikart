@@ -1,6 +1,31 @@
 /**=====================
       Header CSS Start
 ==========================**/
+
+// Modern Header Wrapper with Glassmorphism
+.page-header {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(14, 165, 233, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.close_icon {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  // Dark mode support
+  body.dark-only & {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
+    border-bottom-color: rgba(14, 165, 233, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+    &.close_icon {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
 .offcanvas,
 .offcanvas-bookmark {
   .page-wrapper {
@@ -19,40 +44,69 @@
 
 .logo-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
   .toggle-sidebar {
     cursor: pointer;
     position: relative;
     @include flex_common;
     @include pseudowh($width: 40px, $height: 40px);
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     svg {
       @include pseudowh($width: $header-wrapper-nav-icon-size, $height: $header-wrapper-nav-icon-size);
       font-size: 22px;
-      color: $white;
+      color: #1e293b;
+      transition: all 0.3s ease;
     }
 
     i {
       font-size: 22px;
-      color: $white;
+      color: #1e293b;
     }
 
     &:before {
       @include pos;
       @include pseudowh($width: 40px, $height: 40px);
-      background-color: rgba(236, 137, 81, 0.1);
-      border-radius: 100%;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(14, 165, 233, 0.05) 100%);
+      border-radius: 8px;
       z-index: -2;
       left: 50%;
       top: 50%;
       transform: scale(0) translate(-50%, -50%);
       transform-origin: center center;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     &:hover {
       &:before {
         transform: scale(1) translate(-50%, -50%);
+      }
+
+      svg {
+        color: #0ea5e9;
+        filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.2));
+      }
+    }
+
+    // Dark mode
+    body.dark-only & {
+      svg,
+      i {
+        color: $white;
+      }
+
+      &:before {
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.1) 100%);
+      }
+
+      &:hover {
+        svg {
+          filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.3));
+        }
       }
     }
   }
@@ -73,14 +127,59 @@
   top: 80px;
   position: absolute;
   z-index: 8;
-  background-color: $white;
-  transition: all linear 0.3s;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 1px rgba(255, 255, 255, 0.5);
+  transition: all linear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   @extend %for-animated-hover;
 
   li {
+    border-radius: 8px;
+    margin: 4px 8px;
+    transition: all 0.3s ease;
+
     a {
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      color: #1e293b;
+
+      &:hover {
+        background-color: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+        padding-left: 12px;
+      }
+
       svg {
         margin-top: 0 !important;
+        transition: all 0.3s ease;
+        color: #475569;
+
+        &:hover {
+          color: #0ea5e9;
+        }
+      }
+    }
+
+    &:hover {
+      background-color: rgba(14, 165, 233, 0.05);
+    }
+  }
+
+  // Dark mode
+  body.dark-only & {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.98) 0%, rgba(23, 32, 45, 0.98) 100%);
+    border-color: rgba(14, 165, 233, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.1);
+
+    li {
+      a {
+        color: $white;
+
+        svg {
+          color: rgba(255, 255, 255, 0.7);
+        }
       }
     }
   }
@@ -448,6 +547,23 @@
 
   .btn {
     padding: calc(7px + (9 - 7) * ((100vw - 320px) / (1920 - 320))) calc(14px + (20 - 14) * ((100vw - 320px) / (1920 - 320))) !important;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+
+    &:hover {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
+      transform: translateY(-2px);
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25), 0 8px 20px rgba(14, 165, 233, 0.3);
+      outline: none;
+    }
   }
 }
 
