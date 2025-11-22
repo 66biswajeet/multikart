@@ -35,7 +35,6 @@ const Sidebar = () => {
     }
   }, []);
 
-
   return (
     <div className={`sidebar-wrapper ${sidebarOpen ? "close_icon" : ""}`}>
       <div className={`${mounted ? "skeleton-loader" : ""}`}>
@@ -46,7 +45,13 @@ const Sidebar = () => {
         <nav className="sidebar-main">
           <div id="sidebar-menu">
             <ul className="sidebar-links" id="simple-bar">
-               <MenuList menu={MENUITEMS} level={0} activeMenu={activeMenu} setActiveMenu={setActiveMenu} key={role} />
+              <MenuList
+                menu={MENUITEMS}
+                level={0}
+                activeMenu={activeMenu}
+                setActiveMenu={setActiveMenu}
+                key={role}
+              />
             </ul>
           </div>
         </nav>
