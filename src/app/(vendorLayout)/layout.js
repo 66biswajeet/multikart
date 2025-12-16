@@ -6,6 +6,7 @@ import Footer from "@/layout/footer";
 import Header from "@/layout/header";
 import VendorSidebar from "@/components/vendor/sidebar";
 
+// new done
 const VendorLayout = ({ children }) => {
   const [mode, setMode] = useState(false);
   const [ltr, setLtr] = useState(true);
