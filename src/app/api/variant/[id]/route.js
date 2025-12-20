@@ -9,7 +9,7 @@ import { requireAdmin } from "@/utils/auth/serverAuth";
  * Retrieves a single variant by its ID
  */
 export async function GET(request, { params }) {
-  const { id } = params;
+  const { id } = await params; // Await params for Next.js 13+
   try {
     await dbConnect();
     const authCheck = await requireAdmin(request);
@@ -29,7 +29,11 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error(`❌ GET /api/variant/${id} Error:`, error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch variant", error: error.message },
+      {
+        success: false,
+        message: "Failed to fetch variant",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
@@ -40,7 +44,7 @@ export async function GET(request, { params }) {
  * Updates a single variant (name, description, options, etc.)
  */
 export async function PUT(request, { params }) {
-  const { id } = params;
+  const { id } = await params; // Await params for Next.js 13+
   try {
     await dbConnect();
     const authCheck = await requireAdmin(request);
@@ -64,17 +68,19 @@ export async function PUT(request, { params }) {
     if (description !== undefined) variant.description = description;
     if (input_type) variant.input_type = input_type;
     if (active !== undefined) variant.active = active;
-    
+
     // Replace options array completely
     if (options) {
-        variant.options = options;
+      variant.options = options;
     }
 
     await variant.save();
 
-    return NextResponse.json(
-      { success: true, message: "Variant updated successfully", data: variant }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Variant updated successfully",
+      data: variant,
+    });
   } catch (error) {
     console.error(`❌ PUT /api/variant/${id} Error:`, error);
     if (error.code === 11000) {
@@ -84,7 +90,11 @@ export async function PUT(request, { params }) {
       );
     }
     return NextResponse.json(
-      { success: false, message: "Failed to update variant", error: error.message },
+      {
+        success: false,
+        message: "Failed to update variant",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
@@ -95,7 +105,7 @@ export async function PUT(request, { params }) {
  * Deletes a single variant
  */
 export async function DELETE(request, { params }) {
-  const { id } = params;
+  const { id } = await params; // Await params for Next.js 13+
   try {
     await dbConnect();
     const authCheck = await requireAdmin(request);
@@ -104,10 +114,16 @@ export async function DELETE(request, { params }) {
     }
 
     // Check if variant is in use by any category
-    const categoryInUse = await Category.findOne({ "variant_mapping.variant_id": id });
+    const categoryInUse = await Category.findOne({
+      "variant_mapping.variant_id": id,
+    });
     if (categoryInUse) {
       return NextResponse.json(
-        { success: false, message: "Cannot delete variant: It is linked to one or more categories." },
+        {
+          success: false,
+          message:
+            "Cannot delete variant: It is linked to one or more categories.",
+        },
         { status: 400 }
       );
     }
@@ -120,13 +136,18 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    return NextResponse.json(
-      { success: true, message: "Variant deleted successfully" }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Variant deleted successfully",
+    });
   } catch (error) {
     console.error(`❌ DELETE /api/variant/${id} Error:`, error);
     return NextResponse.json(
-      { success: false, message: "Failed to delete variant", error: error.message },
+      {
+        success: false,
+        message: "Failed to delete variant",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
