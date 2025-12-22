@@ -7,7 +7,11 @@ import FormBtn from "../../elements/buttons/FormBtn";
 import request from "../../utils/axiosUtils";
 import { store } from "../../utils/axiosUtils/API";
 import { getHelperText } from "../../utils/customFunctions/getHelperText";
-import { YupObject, passwordConfirmationSchema, passwordSchema } from "../../utils/validation/ValidationSchemas";
+import {
+  YupObject,
+  passwordConfirmationSchema,
+  passwordSchema,
+} from "../../utils/validation/ValidationSchemas";
 import Loader from "../commonComponent/Loader";
 import AddressComponent from "../inputFields/AddressComponent";
 import CheckBoxField from "../inputFields/CheckBoxField";
@@ -18,22 +22,27 @@ import { StoreValidationSchema } from "./widgets/StoreValidationSchema";
 import StoreVendor from "./widgets/StoreVendor";
 import useCustomQuery from "@/utils/hooks/useCustomQuery";
 
-const StoreForm = ({ updateId, buttonName }) => {
+const StoreForm = ({ updateId, buttonName, mutate, loading }) => {
   const { t } = useTranslation("common");
   const router = useRouter();
   const {
     data: oldData,
     isLoading,
     refetch,
-  } = useCustomQuery(["store/id"], () => request({ url: store + "/" + updateId }, router), {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    enabled: false,
-    select: (data) => data?.data,
-  });
+  } = useCustomQuery(
+    ["store/id"],
+    () => request({ url: store + "/" + updateId }, router),
+    {
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      enabled: false,
+      select: (res) => res?.data?.data || res?.data,
+    }
+  );
   useEffect(() => {
     updateId && refetch();
   }, [updateId]);
+
   if (updateId && isLoading) return <Loader />;
   return (
     <>
@@ -46,18 +55,43 @@ const StoreForm = ({ updateId, buttonName }) => {
           password_confirmation: !updateId && passwordConfirmationSchema,
         })}
         onSubmit={(values) => {
-          // Put Your Logic Here
-          router.push(`/store`);
+          if (updateId) {
+            mutate(values);
+          } else {
+            mutate(values);
+          }
         }}
       >
         {({ setFieldValue, values, errors, touched }) => (
           <Form className="theme-form theme-form-2 mega-form">
             <Row>
-              <FileUploadField values={values} setFieldValue={setFieldValue} title="StoreLogo" type="file" id="store_logo_id" name="store_logo_id" updateId={updateId} errors={errors} touched={touched} helpertext={getHelperText("500x500px")} />
+              <FileUploadField
+                values={values}
+                setFieldValue={setFieldValue}
+                title="VendorLogo"
+                type="file"
+                id="store_logo_id"
+                name="store_logo_id"
+                updateId={updateId}
+                errors={errors}
+                touched={touched}
+                helpertext={getHelperText("500x500px")}
+              />
               <SimpleInputField
                 nameList={[
-                  { name: "store_name", placeholder: t("EnterStoreName"), require: "true" },
-                  { name: "description", title: "StoreDescription", type: "textarea", placeholder: t("EnterDescription"), require: "true" },
+                  {
+                    name: "store_name",
+                    title: "VendorName",
+                    placeholder: t("EnterVendorName"),
+                    require: "true",
+                  },
+                  {
+                    name: "description",
+                    title: "VendorDescription",
+                    type: "textarea",
+                    placeholder: t("EnterDescription"),
+                    require: "true",
+                  },
                 ]}
               />
               <AddressComponent values={values} />
@@ -67,8 +101,19 @@ const StoreForm = ({ updateId, buttonName }) => {
                   <>
                     <SimpleInputField
                       nameList={[
-                        { name: "password", type: "password", placeholder: t("EnterPassword"), require: "true" },
-                        { name: "password_confirmation", title: "ConfirmPassword", type: "password", placeholder: t("Re-EnterPassword"), require: "true" },
+                        {
+                          name: "password",
+                          type: "password",
+                          placeholder: t("EnterPassword"),
+                          require: "true",
+                        },
+                        {
+                          name: "password_confirmation",
+                          title: "ConfirmPassword",
+                          type: "password",
+                          placeholder: t("Re-EnterPassword"),
+                          require: "true",
+                        },
                       ]}
                     />
                   </>
@@ -76,11 +121,31 @@ const StoreForm = ({ updateId, buttonName }) => {
               </div>
               <SimpleInputField
                 nameList={[
-                  { name: "facebook", type: "url", placeholder: t("EnterFacebookurl") },
-                  { name: "pinterest", type: "url", placeholder: t("EnterPinteresturl") },
-                  { name: "instagram", type: "url", placeholder: t("EnterInstagramurl") },
-                  { name: "twitter", type: "url", placeholder: t("EnterTwitterurl") },
-                  { name: "youtube", type: "url", placeholder: t("EnterYoutubeurl") },
+                  {
+                    name: "facebook",
+                    type: "url",
+                    placeholder: t("EnterFacebookurl"),
+                  },
+                  {
+                    name: "pinterest",
+                    type: "url",
+                    placeholder: t("EnterPinteresturl"),
+                  },
+                  {
+                    name: "instagram",
+                    type: "url",
+                    placeholder: t("EnterInstagramurl"),
+                  },
+                  {
+                    name: "twitter",
+                    type: "url",
+                    placeholder: t("EnterTwitterurl"),
+                  },
+                  {
+                    name: "youtube",
+                    type: "url",
+                    placeholder: t("EnterYoutubeurl"),
+                  },
                 ]}
               />
               <CheckBoxField name="hide_vendor_email" title="HideEmail" />

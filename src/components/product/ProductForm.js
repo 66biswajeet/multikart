@@ -137,14 +137,17 @@ const ProductForm = ({
 
   if (updateId && oldDataLoading) return <Loader />;
 
+  const initialValues = getInitialValues();
+
   return (
     <Formik
-      enableReinitialize={true}
-      initialValues={getInitialValues()}
+      key={updateId || "new-product"}
+      enableReinitialize={false}
+      initialValues={initialValues}
       validationSchema={YupObject({
         ...ProductValidationSchema,
         standard_price: Yup.number().min(0).nullable(),
-        allowed_conditions: Yup.array(),
+        allowed_conditions: Yup.array().notRequired(),
         upc: Yup.string().nullable(),
         ean: Yup.string().nullable(),
         gtin: Yup.string().nullable(),
@@ -153,15 +156,22 @@ const ProductForm = ({
       })}
       onSubmit={async (values, { setSubmitting }) => {
         try {
+          console.log("🚀 Form onSubmit triggered");
+          console.log("📦 Update ID:", updateId);
+          console.log("📦 Form values:", values);
           setSubmitting(true);
           if (updateId) {
             values["_method"] = "put";
+            console.log("✏️ Update mode - PUT request will be sent");
+          } else {
+            console.log("➕ Create mode - POST request will be sent");
           }
-          await ProductSubmitFunction(null, values, updateId);
-          console.log("✅ Product saved successfully");
+          const result = await ProductSubmitFunction(null, values, updateId);
+          console.log("✅ Product saved successfully, result:", result);
           router.push(`/product`);
         } catch (error) {
           console.error("❌ Failed to save product:", error);
+          console.error("❌ Error details:", error.response || error.message);
         } finally {
           setSubmitting(false);
         }
