@@ -1,6 +1,7 @@
 import {
   RiArticleLine,
   RiCoinsLine,
+  RiBuildingLine,
   RiContactsLine,
   RiCoupon2Line,
   RiCurrencyFill,
@@ -173,6 +174,13 @@ const MENUITEMS = [
     ],
   },
 
+  // Fulfillment Centers Menu Item
+  {
+    title: "Fulfillment Centers",
+    path: "/warehouse",
+    icon: <RiBuildingLine />, // Use a warehouse or building icon
+    type: "link",
+  },
   // --- NEW POLICIES MAIN MENU ITEM ---
   {
     title: "Policies",

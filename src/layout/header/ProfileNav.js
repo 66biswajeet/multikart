@@ -11,7 +11,7 @@ import {
   RiQuestionLine,
   RiUserLine,
   RiShieldUserLine,
-  RiStore2Line, // <-- 1. IMPORT THIS ICON
+  RiStore2Line,
 } from "react-icons/ri";
 import { Media } from "reactstrap";
 import Avatar from "../../components/commonComponent/Avatar";
@@ -30,6 +30,7 @@ const ProfileNav = () => {
   const { accountData, accountContextData } = useContext(AccountContext);
   const [currentUser, setCurrentUser] = useState(null);
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+
   const isStateData =
     (accountContextData.image &&
       Object?.keys(accountContextData.image).length > 0) ||
@@ -44,41 +45,46 @@ const ProfileNav = () => {
   const handleLogout = () => {
     logout();
   };
+
+  // --- REQUIREMENT: GET FIRST NAME ONLY ---
+  // We extract the name from available sources and take only the first word [cite: 166, 295]
+  const fullName =
+    currentUser?.name || accountContextData.name || accountData?.name;
+  const firstName = fullName ? fullName.split(" ")[0] : t("Guest");
+
   return (
     <>
       <li className="profile-nav onhover-dropdown p-0 me-0">
         <Media
           className="profile-media"
           onClick={() => {
-            setIsComponentVisible((prev) => !prev), setProfileModal(!profileModal);
+            setIsComponentVisible((prev) => !prev),
+              setProfileModal(!profileModal);
           }}
         >
           <Avatar
             data={
-              isStateData ? accountContextData.image : accountData?.profile_image
+              isStateData
+                ? accountContextData.image
+                : accountData?.profile_image
             }
             name={accountData}
             customClass={"rounded-circle"}
           />
-          <Media body className="user-name-hide">
-            <span>
-              {currentUser?.name ||
-                accountContextData.name ||
-                accountData?.name}
-            </span>
-            <p className="mb-0 mt-1">
-              {userIsAdmin ? (
-                <span className="text-success">
-                  <RiShieldUserLine className="me-1" />
-                  Admin
-                </span>
-              ) : accountData ? (
-                accountData?.role?.name
-              ) : (
-                t("Account")
-              )}
-              <RiArrowDownSLine className="middle" />
-            </p>
+          <Media body className="profile-media-body">
+            {" "}
+            {/* Changed class to avoid potential 'hide' rules */}
+            <div className="media-body">
+              <span className="f-w-600 d-block">
+                {t("Hello")}, {firstName}
+              </span>
+              <p className="mb-0 font-roboto">
+                {userIsAdmin
+                  ? "Admin"
+                  : accountData?.role?.name || t("Account")}
+                <i className="middle ri-arrow-down-s-line"></i>
+              </p>
+            </div>
           </Media>
         </Media>
         <ul
@@ -102,16 +108,16 @@ const ProfileNav = () => {
             </li>
           )}
 
-          {/* --- 2. ADD THIS VENDOR DASHBOARD LINK --- */}
-          {accountData?.store && accountData.store.vendor_status === "Approved" && (
-            <li>
-              <Link href="/vendor/dashboard">
-                <RiStore2Line />
-                <span>Vendor Dashboard</span>
-              </Link>
-            </li>
-          )}
-          {/* --- END OF ADDITION --- */}
+          {/* Vendor Dashboard Link */}
+          {accountData?.store &&
+            accountData.store.vendor_status === "Approved" && (
+              <li>
+                <Link href="/vendor/dashboard">
+                  <RiStore2Line />
+                  <span>Vendor Dashboard</span>
+                </Link>
+              </li>
+            )}
 
           <li>
             <a onClick={() => setModal(true)}>
