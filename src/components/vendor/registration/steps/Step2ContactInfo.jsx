@@ -44,6 +44,7 @@ export default function Step2ContactInfo({ onSubmit, initialData }) {
   };
 
   const handleReuse = (values, setFieldValue, key) => {
+    // Check the actual current state of the checkbox
     const reuse = values.contacts[key].reuse_primary;
     if (reuse) {
       setFieldValue(`contacts.${key}.name`, values.contacts.primary.name);
@@ -60,28 +61,29 @@ export default function Step2ContactInfo({ onSubmit, initialData }) {
       enableReinitialize
     >
       {({ values, setFieldValue }) => (
-        <Form className="row g-3">
+        <Form className="row g-4">
+          {/* --- SECTION 1: PRIMARY CONTACT --- */}
           <div className="col-12">
-            <h5>Primary Contact</h5>
+            <h5 className="text-primary fw-bold">Primary Contact</h5>
           </div>
           <div className="col-md-3">
             <label className="form-label">Name</label>
             <Field name="contacts.primary.name" className="form-control" />
-            <div className="text-danger">
+            <div className="text-danger small">
               <ErrorMessage name="contacts.primary.name" />
             </div>
           </div>
           <div className="col-md-3">
             <label className="form-label">Email</label>
             <Field name="contacts.primary.email" className="form-control" />
-            <div className="text-danger">
+            <div className="text-danger small">
               <ErrorMessage name="contacts.primary.email" />
             </div>
           </div>
           <div className="col-md-3">
             <label className="form-label">Phone</label>
             <Field name="contacts.primary.phone" className="form-control" />
-            <div className="text-danger">
+            <div className="text-danger small">
               <ErrorMessage name="contacts.primary.phone" />
             </div>
           </div>
@@ -93,80 +95,130 @@ export default function Step2ContactInfo({ onSubmit, initialData }) {
             />
           </div>
 
-          <div className="col-12 mt-3">
-            <h5>Orders Contact</h5>
+          {/* VISUAL SEPARATOR */}
+          <div className="col-12 py-0">
+            <hr />
           </div>
-          <div className="col-md-3">
-            <label className="form-label">Name</label>
-            <Field name="contacts.orders.name" className="form-control" />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Email</label>
-            <Field name="contacts.orders.email" className="form-control" />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Phone</label>
-            <Field name="contacts.orders.phone" className="form-control" />
-          </div>
-          <div className="col-md-3 d-flex align-items-center">
-            <label className="form-check ms-2">
+
+          {/* --- SECTION 2: ORDERS CONTACT --- */}
+          <div className="col-12 d-flex justify-content-between align-items-center">
+            <h5 className="text-primary fw-bold mb-0">
+              Orders & Fulfillment Contact
+            </h5>
+            <label className="form-check d-flex align-items-center mb-0">
               <Field
                 type="checkbox"
                 name="contacts.orders.reuse_primary"
-                className="form-check-input"
-                onChange={() => {
-                  setFieldValue(
-                    "contacts.orders.reuse_primary",
-                    !values.contacts.orders.reuse_primary
-                  );
-                  setTimeout(
-                    () => handleReuse(values, setFieldValue, "orders"),
-                    0
-                  );
+                className="form-check-input me-2"
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setFieldValue("contacts.orders.reuse_primary", isChecked);
+                  if (isChecked) {
+                    setFieldValue(
+                      "contacts.orders.name",
+                      values.contacts.primary.name
+                    );
+                    setFieldValue(
+                      "contacts.orders.email",
+                      values.contacts.primary.email
+                    );
+                    setFieldValue(
+                      "contacts.orders.phone",
+                      values.contacts.primary.phone
+                    );
+                  }
                 }}
               />
-              <span className="ms-2">Reuse Primary</span>
+              <span className="small text-muted">Reuse Primary Contact</span>
             </label>
           </div>
-
-          <div className="col-12 mt-3">
-            <h5>Payout Contact</h5>
-          </div>
-          <div className="col-md-3">
+          <div className="col-md-4">
             <label className="form-label">Name</label>
-            <Field name="contacts.payout.name" className="form-control" />
+            <Field
+              name="contacts.orders.name"
+              className="form-control"
+              disabled={values.contacts.orders.reuse_primary}
+            />
           </div>
-          <div className="col-md-3">
+          <div className="col-md-4">
             <label className="form-label">Email</label>
-            <Field name="contacts.payout.email" className="form-control" />
+            <Field
+              name="contacts.orders.email"
+              className="form-control"
+              disabled={values.contacts.orders.reuse_primary}
+            />
           </div>
-          <div className="col-md-3">
+          <div className="col-md-4">
             <label className="form-label">Phone</label>
-            <Field name="contacts.payout.phone" className="form-control" />
+            <Field
+              name="contacts.orders.phone"
+              className="form-control"
+              disabled={values.contacts.orders.reuse_primary}
+            />
           </div>
-          <div className="col-md-3 d-flex align-items-center">
-            <label className="form-check ms-2">
+
+          {/* VISUAL SEPARATOR */}
+          <div className="col-12 py-0">
+            <hr />
+          </div>
+
+          {/* --- SECTION 3: PAYOUT CONTACT --- */}
+          <div className="col-12 d-flex justify-content-between align-items-center">
+            <h5 className="text-primary fw-bold mb-0">Payout Contact</h5>
+            <label className="form-check d-flex align-items-center mb-0">
               <Field
                 type="checkbox"
                 name="contacts.payout.reuse_primary"
-                className="form-check-input"
-                onChange={() => {
-                  setFieldValue(
-                    "contacts.payout.reuse_primary",
-                    !values.contacts.payout.reuse_primary
-                  );
-                  setTimeout(
-                    () => handleReuse(values, setFieldValue, "payout"),
-                    0
-                  );
+                className="form-check-input me-2"
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setFieldValue("contacts.payout.reuse_primary", isChecked);
+                  if (isChecked) {
+                    setFieldValue(
+                      "contacts.payout.name",
+                      values.contacts.primary.name
+                    );
+                    setFieldValue(
+                      "contacts.payout.email",
+                      values.contacts.primary.email
+                    );
+                    setFieldValue(
+                      "contacts.payout.phone",
+                      values.contacts.primary.phone
+                    );
+                  }
                 }}
               />
-              <span className="ms-2">Reuse Primary</span>
+              <span className="small text-muted">Reuse Primary Contact</span>
             </label>
           </div>
+          <div className="col-md-4">
+            <label className="form-label">Name</label>
+            <Field
+              name="contacts.payout.name"
+              className="form-control"
+              disabled={values.contacts.payout.reuse_primary}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label">Email</label>
+            <Field
+              name="contacts.payout.email"
+              className="form-control"
+              disabled={values.contacts.payout.reuse_primary}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label">Phone</label>
+            <Field
+              name="contacts.payout.phone"
+              className="form-control"
+              disabled={values.contacts.payout.reuse_primary}
+            />
+          </div>
 
-          <div className="col-12">
-            <button type="submit" className="btn btn-primary">
+          <div className="col-12 mt-5 border-top pt-4">
+            <button type="submit" className="btn btn-primary btn-lg px-5">
               Save & Continue
             </button>
           </div>

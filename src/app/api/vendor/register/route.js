@@ -3,19 +3,15 @@ import dbConnect from "@/lib/dbConnect";
 import Store from "@/models/Store";
 import User from "@/models/User";
 import Role from "@/models/Role";
-import Counter, { getNextCounterValue } from "@/models/Counter";
+import { getNextCounterValue } from "@/models/Counter";
 import { sendVendorRegistrationEmail } from "@/utils/email/mailer";
 import { extractAuthFromRequest } from "@/utils/auth/serverAuth";
 
-// We no longer need the slugify helper function here,
-// because the Store.js model's pre-validate hook now handles it.
-
-// POST - Create/Update vendor registration
+// POST - Create/Update vendor registration steps
 export async function POST(request) {
   try {
     await dbConnect();
 
-    // Get authenticated user
     const authData = await extractAuthFromRequest(request);
     if (!authData.userId) {
       return NextResponse.json(
@@ -24,7 +20,7 @@ export async function POST(request) {
       );
     }
 
-    const { userId } = authData; // Fixed: authData directly contains userId
+    const { userId } = authData;
     const body = await request.json();
     const { step, data } = body;
 
@@ -40,11 +36,14 @@ export async function POST(request) {
       );
     }
 
+    // Step 1: Business Details & Store Name
     if (step === 1) {
-      // Step 1: Business Details
       if (data.store_name) {
+        // Double check uniqueness before saving
         const nameExists = await Store.findOne({
-          store_name: data.store_name,
+          store_name: {
+            $regex: new RegExp(`^${data.store_name.trim()}$`, "i"),
+          },
           _id: { $ne: existingStore?._id },
         });
         if (nameExists) {
@@ -55,11 +54,19 @@ export async function POST(request) {
         }
       }
 
+      const businessData = {
+        type: data.business.type,
+        country_of_incorporation: data.business.country_of_incorporation, // Requirement 1
+        // Requirement 4: These will be null/empty for Individual Sellers via frontend logic
+        name: data.business.name,
+        registration_number: data.business.registration_number,
+        registration_date: data.business.registration_date,
+        tax_id: data.business.tax_id,
+      };
+
       if (existingStore) {
-        // Update existing
-        existingStore.business = data.business;
+        existingStore.business = businessData;
         existingStore.store_name = data.store_name;
-        // The slug will be auto-updated by the pre-validate hook
         existingStore.registration_step = 1;
         existingStore.registration_data = {
           ...existingStore.registration_data,
@@ -68,35 +75,30 @@ export async function POST(request) {
         await existingStore.save();
         return NextResponse.json({ success: true, data: existingStore });
       } else {
-        // Create new
         const vendorId = `V${String(
           await getNextCounterValue("vendor")
         ).padStart(5, "0")}`;
         const newStore = new Store({
           store_name: data.store_name,
-          // SLUG is no longer needed here, the model will create it
           owner_user_id: userId,
           vendor_id: vendorId,
           vendor_status: "Pending",
-          business: data.business,
+          business: businessData,
           registration_step: 1,
           registration_data: { step1: data },
-          // STATE and COUNTRY placeholders are no longer needed
         });
         await newStore.save();
         return NextResponse.json({ success: true, data: newStore });
       }
     }
 
-    // ... (The rest of Step 2, 3, 4, 5 remains the same)
-
+    // --- Steps 2 to 5 Logic remains consistent with your provided code ---
     if (step === 2) {
-      if (!existingStore) {
+      if (!existingStore)
         return NextResponse.json(
-          { success: false, message: "Please complete step 1 first" },
+          { success: false, message: "Complete step 1 first" },
           { status: 400 }
         );
-      }
       existingStore.contacts = data.contacts;
       existingStore.registration_step = 2;
       existingStore.registration_data = {
@@ -108,12 +110,11 @@ export async function POST(request) {
     }
 
     if (step === 3) {
-      if (!existingStore) {
+      if (!existingStore)
         return NextResponse.json(
-          { success: false, message: "Please complete previous steps first" },
+          { success: false, message: "Complete previous steps first" },
           { status: 400 }
         );
-      }
       existingStore.warehouses = data.warehouses || [];
       existingStore.channels = data.channels || [];
       existingStore.registration_step = 3;
@@ -126,12 +127,11 @@ export async function POST(request) {
     }
 
     if (step === 4) {
-      if (!existingStore) {
+      if (!existingStore)
         return NextResponse.json(
-          { success: false, message: "Please complete previous steps first" },
+          { success: false, message: "Complete previous steps first" },
           { status: 400 }
         );
-      }
       existingStore.payout = data.payout;
       existingStore.registration_step = 4;
       existingStore.registration_data = {
@@ -143,12 +143,11 @@ export async function POST(request) {
     }
 
     if (step === 5) {
-      if (!existingStore) {
+      if (!existingStore)
         return NextResponse.json(
-          { success: false, message: "Please complete previous steps first" },
+          { success: false, message: "Complete previous steps first" },
           { status: 400 }
         );
-      }
       existingStore.registration_step = 6;
       existingStore.vendor_status = "Pending";
       existingStore.registration_data = {
@@ -158,27 +157,21 @@ export async function POST(request) {
       };
 
       const vendorRole = await Role.findOne({ name: "vendor" });
-      if (vendorRole) {
-        const user = await User.findById(userId);
-        if (user) {
-          user.role = vendorRole._id;
-          await user.save();
-        }
-      }
-      await existingStore.save();
-
       const user = await User.findById(userId);
-      if (user) {
+      if (vendorRole && user) {
+        user.role = vendorRole._id;
+        await user.save();
         await sendVendorRegistrationEmail(
           user.email,
           user.name,
           existingStore.vendor_id
         );
       }
+      await existingStore.save();
 
       return NextResponse.json({
         success: true,
-        message: "Vendor registration submitted successfully",
+        message: "Registration submitted successfully",
         data: existingStore,
       });
     }
@@ -196,10 +189,25 @@ export async function POST(request) {
   }
 }
 
-// GET - Get current registration status
+// GET - Get status OR check store name availability
 export async function GET(request) {
   try {
     await dbConnect();
+    const { searchParams } = new URL(request.url);
+    const checkName = searchParams.get("check_name");
+
+    // Requirement 2: Real-time availability check
+    if (checkName) {
+      const nameExists = await Store.findOne({
+        store_name: { $regex: new RegExp(`^${checkName.trim()}$`, "i") },
+      });
+      return NextResponse.json({
+        success: true,
+        available: !nameExists,
+        message: nameExists ? "This name is not available" : "Name Available",
+      });
+    }
+
     const authData = await extractAuthFromRequest(request);
     if (!authData.userId) {
       return NextResponse.json(
@@ -208,19 +216,12 @@ export async function GET(request) {
       );
     }
 
-    const { userId } = authData; // Fixed: authData directly contains userId
-    const store = await Store.findOne({ owner_user_id: userId }).populate(
-      "owner_user_id",
-      "name email"
-    );
-
-    if (!store) {
-      return NextResponse.json({ success: true, data: null });
-    }
-
-    return NextResponse.json({ success: true, data: store });
+    const store = await Store.findOne({
+      owner_user_id: authData.userId,
+    }).populate("owner_user_id", "name email");
+    return NextResponse.json({ success: true, data: store || null });
   } catch (error) {
-    console.error("Error fetching vendor registration:", error);
+    console.error("Error fetching vendor data:", error);
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 500 }

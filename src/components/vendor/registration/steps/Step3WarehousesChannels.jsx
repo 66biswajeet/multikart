@@ -1,22 +1,17 @@
 "use client";
-import { Formik, Form, Field, FieldArray } from "formik";
+import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
+import { Row, Col } from "reactstrap";
+import { useTranslation } from "react-i18next";
 
-export default function Step3WarehousesChannels({ onSubmit, initialData }) {
+export default function Step3WarehousesChannels({
+  onSubmit,
+  initialData,
+  onStepBack,
+}) {
+  const { t } = useTranslation("common");
+
+  // Requirement: Remove warehouses from initial values
   const initialValues = {
-    warehouses: initialData?.warehouses?.length
-      ? initialData.warehouses
-      : [
-          {
-            name: "",
-            address: "",
-            city: "",
-            state: "",
-            country: "",
-            zip: "",
-            phone: "",
-            is_active: true,
-          },
-        ],
     channels: initialData?.channels?.length
       ? initialData.channels
       : [{ type: "Storefront", handle: "", url: "", is_active: true }],
@@ -29,175 +24,92 @@ export default function Step3WarehousesChannels({ onSubmit, initialData }) {
       enableReinitialize
     >
       {({ values }) => (
-        <Form className="row g-3">
-          <div className="col-12">
-            <h5>Warehouses</h5>
+        <Form className="theme-form">
+          {/* --- SECTION: SALES CHANNELS ONLY --- */}
+          <div className="col-12 mb-4">
+            <h5 className="text-primary fw-bold">{t("Sales Channels")}</h5>
+            <p className="text-muted small">
+              {t(
+                "Add your online presence such as storefronts, social media links, or external websites."
+              )}
+            </p>
           </div>
-          <FieldArray name="warehouses">
-            {({ push, remove }) => (
-              <>
-                {values.warehouses.map((w, idx) => (
-                  <div key={idx} className="row g-2 align-items-end mb-2">
-                    <div className="col-md-3">
-                      <label className="form-label">Name</label>
-                      <Field
-                        name={`warehouses.${idx}.name`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Address</label>
-                      <Field
-                        name={`warehouses.${idx}.address`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <label className="form-label">City</label>
-                      <Field
-                        name={`warehouses.${idx}.city`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <label className="form-label">State</label>
-                      <Field
-                        name={`warehouses.${idx}.state`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <label className="form-label">Country</label>
-                      <Field
-                        name={`warehouses.${idx}.country`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <label className="form-label">ZIP</label>
-                      <Field
-                        name={`warehouses.${idx}.zip`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <label className="form-label">Phone</label>
-                      <Field
-                        name={`warehouses.${idx}.phone`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2 d-flex">
-                      <label className="form-check">
-                        <Field
-                          type="checkbox"
-                          name={`warehouses.${idx}.is_active`}
-                          className="form-check-input"
-                        />
-                        <span className="ms-2">Active</span>
-                      </label>
-                    </div>
-                    <div className="col-md-2">
-                      {values.warehouses.length > 1 && (
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger"
-                          onClick={() => remove(idx)}
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div className="col-12">
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary"
-                    onClick={() =>
-                      push({
-                        name: "",
-                        address: "",
-                        city: "",
-                        state: "",
-                        country: "",
-                        zip: "",
-                        phone: "",
-                        is_active: true,
-                      })
-                    }
-                  >
-                    + Add Warehouse
-                  </button>
-                </div>
-              </>
-            )}
-          </FieldArray>
 
-          <div className="col-12 mt-4">
-            <h5>Sales Channels</h5>
-          </div>
           <FieldArray name="channels">
             {({ push, remove }) => (
               <>
                 {values.channels.map((c, idx) => (
-                  <div key={idx} className="row g-2 align-items-end mb-2">
-                    <div className="col-md-3">
-                      <label className="form-label">Type</label>
-                      <Field
-                        as="select"
-                        name={`channels.${idx}.type`}
-                        className="form-select"
-                      >
-                        <option value="Storefront">Storefront</option>
-                        <option value="Facebook">Facebook</option>
-                        <option value="Instagram">Instagram</option>
-                        <option value="WhatsApp">WhatsApp</option>
-                        <option value="Website">Website</option>
-                        <option value="Other">Other</option>
-                      </Field>
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Handle</label>
-                      <Field
-                        name={`channels.${idx}.handle`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">URL</label>
-                      <Field
-                        name={`channels.${idx}.url`}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-2 d-flex">
-                      <label className="form-check">
+                  <div
+                    key={idx}
+                    className="channel-row pb-3 mb-4 border-bottom"
+                  >
+                    <Row className="g-3 align-items-center">
+                      <Col md="3">
+                        <label className="form-label">
+                          {t("Channel Type")}
+                        </label>
                         <Field
-                          type="checkbox"
-                          name={`channels.${idx}.is_active`}
-                          className="form-check-input"
-                        />
-                        <span className="ms-2">Active</span>
-                      </label>
-                    </div>
-                    <div className="col-md-2">
-                      {values.channels.length > 1 && (
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger"
-                          onClick={() => remove(idx)}
+                          as="select"
+                          name={`channels.${idx}.type`}
+                          className="form-select"
                         >
-                          Remove
-                        </button>
-                      )}
-                    </div>
+                          <option value="Storefront">Storefront</option>
+                          <option value="Facebook">Facebook</option>
+                          <option value="Instagram">Instagram</option>
+                          <option value="WhatsApp">WhatsApp</option>
+                          <option value="Website">Website</option>
+                          <option value="Other">Other</option>
+                        </Field>
+                      </Col>
+
+                      <Col md="3">
+                        <label className="form-label">
+                          {t("Handle / User Name")}
+                        </label>
+                        <Field
+                          name={`channels.${idx}.handle`}
+                          placeholder="@username"
+                          className="form-control"
+                        />
+                      </Col>
+
+                      <Col md="4">
+                        <label className="form-label">{t("URL")}</label>
+                        <Field
+                          name={`channels.${idx}.url`}
+                          placeholder="https://..."
+                          className="form-control"
+                        />
+                      </Col>
+
+                      <Col md="2" className="d-flex align-items-center pt-4">
+                        <label className="form-check d-flex align-items-center mb-0 cursor-pointer">
+                          <Field
+                            type="checkbox"
+                            name={`channels.${idx}.is_active`}
+                            className="form-check-input me-2"
+                          />
+                          <span className="small">{t("Active")}</span>
+                        </label>
+
+                        {values.channels.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn btn-link text-danger p-0 ms-auto"
+                            onClick={() => remove(idx)}
+                          >
+                            <i className="ri-delete-bin-line"></i>
+                          </button>
+                        )}
+                      </Col>
+                    </Row>
                   </div>
                 ))}
+
                 <div className="col-12">
                   <button
                     type="button"
-                    className="btn btn-outline-primary"
+                    className="btn btn-outline-primary btn-sm"
                     onClick={() =>
                       push({
                         type: "Storefront",
@@ -207,16 +119,25 @@ export default function Step3WarehousesChannels({ onSubmit, initialData }) {
                       })
                     }
                   >
-                    + Add Channel
+                    <i className="ri-add-line me-1"></i>{" "}
+                    {t("Add Another Channel")}
                   </button>
                 </div>
               </>
             )}
           </FieldArray>
 
-          <div className="col-12">
-            <button type="submit" className="btn btn-primary mt-2">
-              Save & Continue
+          {/* Navigation Actions */}
+          <div className="mt-5 d-flex justify-content-between border-top pt-4">
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={onStepBack}
+            >
+              {t("Back")}
+            </button>
+            <button type="submit" className="btn btn-primary">
+              {t("Save & Continue")}
             </button>
           </div>
         </Form>

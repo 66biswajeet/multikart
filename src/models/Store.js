@@ -5,6 +5,7 @@ const storeSchema = new mongoose.Schema(
     store_name: {
       type: String,
       required: true,
+      unique: true, // Enforce uniqueness at DB level for Requirement 2
     },
     description: {
       type: String,
@@ -15,12 +16,10 @@ const storeSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    //----new fields added ---//
-    // Add after line 16 (after slug field):
     vendor_id: {
       type: String,
       unique: true,
-      sparse: true, // Allows null values but enforces uniqueness when present
+      sparse: true,
     },
     vendor_status: {
       type: String,
@@ -38,17 +37,18 @@ const storeSchema = new mongoose.Schema(
         enum: [
           "Sole Proprietorship",
           "Partnership",
-          "Private Limited",
-          "Public Limited",
-          "LLC",
+          "Private Limited Company",
+          "Public Limited Company",
+          "Individual Seller",
           "Other",
         ],
         required: false,
       },
-      name: String,
+      name: String, // Legal Business Name
       registration_number: String,
       registration_date: Date,
       tax_id: String,
+      country_of_incorporation: String, // Requirement 1: Added field
     },
     contacts: {
       primary: {
@@ -105,20 +105,18 @@ const storeSchema = new mongoose.Schema(
       account_number: String,
       account_holder_name: String,
       country: String,
-      maldives_bank_code: String, // For Maldives-specific banks
+      maldives_bank_code: String,
       swift_code: String,
     },
     registration_step: {
       type: Number,
-      default: 0, // 0 = not started, 1-5 = current step, 6 = completed
+      default: 0,
       enum: [0, 1, 2, 3, 4, 5, 6],
     },
     registration_data: {
-      type: mongoose.Schema.Types.Mixed, // Store draft data
+      type: mongoose.Schema.Types.Mixed,
       default: {},
     },
-
-    //------------------------//
     store_logo: {
       type: String,
       default: null,
@@ -138,13 +136,11 @@ const storeSchema = new mongoose.Schema(
     city: String,
     address: String,
     pincode: String,
-
     facebook: { type: String, default: null },
     twitter: { type: String, default: null },
     instagram: { type: String, default: null },
     youtube: { type: String, default: null },
     pinterest: { type: String, default: null },
-
     hide_vendor_email: {
       type: Number,
       default: 0,
@@ -153,7 +149,6 @@ const storeSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
     status: {
       type: Number,
       default: 1,
@@ -201,12 +196,10 @@ const storeSchema = new mongoose.Schema(
   }
 );
 
-// Add virtual for ID (to match frontend expectations)
 storeSchema.virtual("id").get(function () {
   return this._id.toHexString();
 });
 
-// Add indexes for better query performance
 storeSchema.index({ vendor_id: 1 });
 storeSchema.index({ vendor_status: 1 });
 
@@ -218,15 +211,12 @@ function toSlug(str) {
     .replace(/^-+|-+$/g, "");
 }
 
-// ensure slug exists and is unique for drafts too
 storeSchema.pre("validate", async function (next) {
   if (!this.slug && this.store_name) {
     let base = toSlug(this.store_name);
     if (!base) base = `store-${Date.now()}`;
     let candidate = base;
     let i = 1;
-    // ensure uniqueness
-    // NOTE: this.constructor is the Model
     while (
       await this.constructor.findOne({
         slug: candidate,

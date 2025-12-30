@@ -1,9 +1,9 @@
+"use client";
 import TabForProduct from "@/components/product/widgets/TabForProduct";
 import Btn from "@/elements/buttons/Btn";
-import AccountContext from "@/helper/accountContext";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, Col, Row } from "reactstrap";
 import SettingContext from "../../helper/settingContext";
@@ -37,59 +37,48 @@ const ProductForm = ({
     isLoading: oldDataLoading,
     refetch,
   } = useCustomQuery(
-    [updateId],
-    () => request({ url: `${product}/${updateId}` }, router),
+    ["admin", "product", updateId],
+    () =>
+      request(
+        {
+          url: `${product}/${updateId}`,
+          headers: { "Cache-Control": "no-cache" }, // Force fresh data from server
+        },
+        router
+      ),
     {
-      refetchOnWindowFocus: false,
       enabled: !!updateId,
-      select: (data) => {
-        console.log("🔍 API Response received:", data);
-        console.log("🔍 Extracted data:", data?.data?.data);
-        return data?.data?.data;
-      },
+      staleTime: 5000, // Data is considered "fresh" for 5 seconds
+      cacheTime: 0, // Still ensure we don't use old data on re-entry
+      select: (data) => data?.data?.data,
     }
   );
 
-  console.log("📊 Current state:", {
-    updateId,
-    hasOldData: !!oldData,
-    isLoading: oldDataLoading,
-    oldData,
-  });
+  // useEffect(() => {
+  //   if (updateId && !saveButton) {
+  //     refetch();
+  //   }
+  // }, [updateId, saveButton, refetch]);
 
-  useEffect(() => {
-    if (updateId && !saveButton) {
-      refetch();
-    }
-  }, [updateId, saveButton, refetch]);
-
-  // --- MODIFIED: Generate initial values based on oldData ---
   const getInitialValues = () => {
-    if (!updateId) {
-      // For new products, return empty initial values
+    if (!updateId || !oldData) {
       return ProductInitValues(null, null);
     }
 
-    if (!oldData) {
-      // Data is still loading, return empty values
-      return ProductInitValues(null, null);
-    }
-
-    // Data has loaded, populate all fields
     const values = ProductInitValues(oldData, updateId);
 
-    // 1. General & Pricing
-    values.standard_price = oldData.standard_price || "";
-    values.allowed_conditions = oldData.allowed_conditions || [];
+    // General & Pricing
+    values.standard_price = oldData.standard_price ?? "";
+    values.allowed_conditions = oldData.allowed_conditions ?? [];
 
-    // 2. Global Identifiers
-    values.upc = oldData.upc || "";
-    values.ean = oldData.ean || "";
-    values.gtin = oldData.gtin || "";
-    values.isbn = oldData.isbn || "";
-    values.mpn = oldData.mpn || "";
+    // Global Identifiers
+    values.upc = oldData.upc ?? "";
+    values.ean = oldData.ean ?? "";
+    values.gtin = oldData.gtin ?? "";
+    values.isbn = oldData.isbn ?? "";
+    values.mpn = oldData.mpn ?? "";
 
-    // 3. Related Products Config (Nested)
+    // Related Products Config
     values.related_product_config = {
       is_manual: oldData.related_product_config?.is_manual ?? true,
       auto_rules: {
@@ -102,7 +91,7 @@ const ProductForm = ({
       },
     };
 
-    // 4. Upsell Config (Nested)
+    // Upsell Config
     values.upsell_product_config = {
       is_manual: oldData.upsell_product_config?.is_manual ?? true,
       auto_rules: {
@@ -119,31 +108,27 @@ const ProductForm = ({
       },
     };
 
-    // 5. Policies (Sanitize nulls to empty string for Formik control)
+    // Policies
     if (oldData.product_policies) {
       values.product_policies = {
         ...values.product_policies,
-        return_policy: oldData.product_policies.return_policy || "",
-        refund_policy: oldData.product_policies.refund_policy || "",
-        warranty_info: oldData.product_policies.warranty_info || "",
-        about_this_item: oldData.product_policies.about_this_item || "",
-        key_features: oldData.product_policies.key_features || [],
+        return_policy: oldData.product_policies.return_policy ?? "",
+        refund_policy: oldData.product_policies.refund_policy ?? "",
+        warranty_info: oldData.product_policies.warranty_info ?? "",
+        about_this_item: oldData.product_policies.about_this_item ?? "",
+        key_features: oldData.product_policies.key_features ?? [],
       };
     }
-
-    console.log("✅ Generated initial values for product:", values);
     return values;
   };
 
   if (updateId && oldDataLoading) return <Loader />;
 
-  const initialValues = getInitialValues();
-
   return (
     <Formik
       key={updateId || "new-product"}
-      enableReinitialize={false}
-      initialValues={initialValues}
+      enableReinitialize={true} // FIX: Allows form to update when oldData changes
+      initialValues={getInitialValues()}
       validationSchema={YupObject({
         ...ProductValidationSchema,
         standard_price: Yup.number().min(0).nullable(),
@@ -156,22 +141,17 @@ const ProductForm = ({
       })}
       onSubmit={async (values, { setSubmitting }) => {
         try {
-          console.log("🚀 Form onSubmit triggered");
-          console.log("📦 Update ID:", updateId);
-          console.log("📦 Form values:", values);
           setSubmitting(true);
           if (updateId) {
             values["_method"] = "put";
-            console.log("✏️ Update mode - PUT request will be sent");
-          } else {
-            console.log("➕ Create mode - POST request will be sent");
           }
-          const result = await ProductSubmitFunction(null, values, updateId);
-          console.log("✅ Product saved successfully, result:", result);
+          await ProductSubmitFunction(null, values, updateId);
+
+          // Force a server refresh and clear cache for the updated ID
+          router.refresh();
           router.push(`/product`);
         } catch (error) {
           console.error("❌ Failed to save product:", error);
-          console.error("❌ Error details:", error.response || error.message);
         } finally {
           setSubmitting(false);
         }
@@ -185,65 +165,63 @@ const ProductForm = ({
         isSubmitting,
         setErrors,
         setTouched,
-      }) => {
-        return (
-          <Form className="theme-form theme-form-2 mega-form vertical-tabs">
-            <Row>
-              <Col>
-                <Card>
-                  <div className="title-header option-title">
-                    <h5>{t(title)}</h5>
-                  </div>
-                  <Row>
-                    <Col xl="3" lg="4">
-                      <TabForProduct
-                        values={values}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                        errors={errors}
-                        touched={touched}
-                      />
-                    </Col>
-                    <AllProductTabs
-                      setErrors={setErrors}
-                      setTouched={setTouched}
-                      touched={touched}
+      }) => (
+        <Form className="theme-form theme-form-2 mega-form vertical-tabs">
+          <Row>
+            <Col>
+              <Card>
+                <div className="title-header option-title">
+                  <h5>{t(title)}</h5>
+                </div>
+                <Row>
+                  <Col xl="3" lg="4">
+                    <TabForProduct
                       values={values}
                       activeTab={activeTab}
-                      isSubmitting={isSubmitting}
-                      setFieldValue={setFieldValue}
-                      errors={errors}
-                      updateId={updateId}
                       setActiveTab={setActiveTab}
+                      errors={errors}
+                      touched={touched}
                     />
-                    <div className="ms-auto justify-content-end dflex-wgap mt-sm-4 mt-2 save-back-button">
+                  </Col>
+                  <AllProductTabs
+                    setErrors={setErrors}
+                    setTouched={setTouched}
+                    touched={touched}
+                    values={values}
+                    activeTab={activeTab}
+                    isSubmitting={isSubmitting}
+                    setFieldValue={setFieldValue}
+                    errors={errors}
+                    updateId={updateId}
+                    setActiveTab={setActiveTab}
+                  />
+                  <div className="ms-auto justify-content-end dflex-wgap mt-sm-4 mt-2 save-back-button">
+                    <Btn
+                      className="btn-outline"
+                      title="Back"
+                      onClick={() => router.back()}
+                    />
+                    {updateId && (
                       <Btn
                         className="btn-outline"
-                        title="Back"
-                        onClick={() => router.back()}
-                      />
-                      {updateId && (
-                        <Btn
-                          className="btn-outline"
-                          type="submit"
-                          title={`save&Continue`}
-                          onClick={() => setSaveButton(true)}
-                        />
-                      )}
-                      <Btn
-                        className="btn-primary"
                         type="submit"
-                        title={buttonName}
-                        disabled={isSubmitting}
+                        title="save&Continue"
+                        onClick={() => setSaveButton(true)}
                       />
-                    </div>
-                  </Row>
-                </Card>
-              </Col>
-            </Row>
-          </Form>
-        );
-      }}
+                    )}
+                    <Btn
+                      className="btn-primary"
+                      type="submit"
+                      title={buttonName}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </Row>
+              </Card>
+            </Col>
+          </Row>
+        </Form>
+      )}
     </Formik>
   );
 };
