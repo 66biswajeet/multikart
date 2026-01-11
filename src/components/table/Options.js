@@ -8,20 +8,33 @@ import AnswerModal from "../q&a/widgets/AnswerModal";
 import DeleteButton from "./DeleteButton";
 import ViewDetails from "./ViewDetails";
 
-const Options = ({ fullObj, mutate, type, moduleName, optionPermission, refetch, keyInPermission, edit: propEdit, destroy: propDestroy }) => {
+const Options = ({
+  fullObj,
+  mutate,
+  type,
+  moduleName,
+  optionPermission,
+  refetch,
+  keyInPermission,
+  edit: propEdit,
+  destroy: propDestroy,
+}) => {
   const pathname = usePathname();
   const [modal, setModal] = useState(false);
-  const [defaultEdit, defaultDestroy] = usePermissionCheck(["edit", "destroy"], keyInPermission ?? keyInPermission);
-  
+  const [defaultEdit, defaultDestroy] = usePermissionCheck(
+    ["edit", "destroy"],
+    keyInPermission ?? keyInPermission
+  );
+
   // Use passed permissions if available, otherwise use default permissions
   const edit = propEdit !== undefined ? propEdit : defaultEdit;
   const destroy = propDestroy !== undefined ? propDestroy : defaultDestroy;
-  
+
   // Debug logging
-  console.log('Options Debug:', {
+  console.log("Options Debug:", {
     fullObj,
-    'fullObj.id': fullObj?.id,
-    'fullObj._id': fullObj?._id,
+    "fullObj.id": fullObj?.id,
+    "fullObj._id": fullObj?._id,
     edit,
     destroy,
     propEdit,
@@ -29,17 +42,21 @@ const Options = ({ fullObj, mutate, type, moduleName, optionPermission, refetch,
     defaultEdit,
     defaultDestroy,
     noEdit: optionPermission?.noEdit,
-    noDelete: optionPermission?.noDelete
+    noDelete: optionPermission?.noDelete,
   });
-  
+
   // Ensure we have an ID (either id or _id)
   const itemId = fullObj?.id || fullObj?._id;
-  
+
   return (
     <div className="custom-ul">
       <NoSsr>
         {optionPermission?.optionHead.type == "View" ? (
-          <ViewDetails fullObj={fullObj} tableData={optionPermission?.optionHead} refetch={refetch} />
+          <ViewDetails
+            fullObj={fullObj}
+            tableData={optionPermission?.optionHead}
+            refetch={refetch}
+          />
         ) : (
           <>
             <div>
@@ -53,19 +70,39 @@ const Options = ({ fullObj, mutate, type, moduleName, optionPermission, refetch,
                 !optionPermission?.noEdit && (
                   <>
                     {optionPermission?.editRedirect ? (
-                      <Link href={`/` + optionPermission?.editRedirect + "/edit/" + itemId}>
+                      <Link
+                        href={
+                          `/` +
+                          optionPermission?.editRedirect +
+                          "/edit/" +
+                          itemId
+                        }
+                      >
                         <RiPencilLine />
                       </Link>
                     ) : type == "post" && moduleName?.toLowerCase() == "tag" ? (
-                      <Link href={`/${pathname.split("/")[1]}/tag/edit/${itemId}`}>
+                      <Link
+                        href={`/${pathname.split("/")[1]}/tag/edit/${itemId}`}
+                      >
                         <RiPencilLine />
                       </Link>
                     ) : type == "post" ? (
-                      <Link href={`/${pathname.split("/")[1]}/category/edit/${itemId}`}>
+                      <Link
+                        href={`/${
+                          pathname.split("/")[1]
+                        }/category/edit/${itemId}`}
+                      >
                         <RiPencilLine />
                       </Link>
                     ) : (
-                      <Link href={`/${pathname.split("/")[1]}/edit/${itemId}`}>
+                      // Fix: If on vendor/products, use /vendor/products/edit/[id]
+                      <Link
+                        href={
+                          pathname.startsWith("/vendor/products")
+                            ? `/vendor/products/edit/${itemId}`
+                            : `/${pathname.split("/")[1]}/edit/${itemId}`
+                        }
+                      >
                         <RiPencilLine />
                       </Link>
                     )}
@@ -73,10 +110,16 @@ const Options = ({ fullObj, mutate, type, moduleName, optionPermission, refetch,
                 )
               )}
             </div>
-            <div>{destroy && !optionPermission?.noDelete && <DeleteButton id={itemId} mutate={mutate} />}</div>
+            <div>
+              {destroy && !optionPermission?.noDelete && (
+                <DeleteButton id={itemId} mutate={mutate} />
+              )}
+            </div>
           </>
         )}
-        {modal && <AnswerModal fullObj={fullObj} modal={modal} setModal={setModal} />}
+        {modal && (
+          <AnswerModal fullObj={fullObj} modal={modal} setModal={setModal} />
+        )}
       </NoSsr>
     </div>
   );

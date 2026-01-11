@@ -1,21 +1,30 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RiDeleteBinLine } from "react-icons/ri";
+import { RiToggleLine } from "react-icons/ri";
 import ShowModal from "../../elements/alerts&Modals/Modal";
 import Btn from "../../elements/buttons/Btn";
 
-const TableDeleteOption = ({ isCheck, url, setIsCheck, refetch }) => {
+const TableStatusOption = ({
+  isCheck,
+  url,
+  setIsCheck,
+  statusType,
+  refetch,
+}) => {
   const { t } = useTranslation("common");
   const [modal, setModal] = useState(false);
 
-  const handleDelete = async (deleteIds) => {
+  const handleStatusUpdate = async (updateIds, newStatus) => {
     try {
-      const response = await fetch(`/api${url}`, {
-        method: "DELETE",
+      const response = await fetch(`/api${url}/bulk-status`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ids: deleteIds }),
+        body: JSON.stringify({
+          ids: updateIds,
+          status: newStatus ? 1 : 0,
+        }),
       });
 
       if (response.ok) {
@@ -25,23 +34,26 @@ const TableDeleteOption = ({ isCheck, url, setIsCheck, refetch }) => {
         if (refetch) {
           refetch();
         }
-        console.log("Items deleted successfully");
+        console.log("Status updated successfully");
       } else {
-        console.error("Bulk delete failed");
+        console.error("Bulk status update failed");
       }
     } catch (error) {
-      console.error("Bulk delete error:", error);
+      console.error("Bulk status update error:", error);
     }
     setModal(false);
   };
 
+  const statusText = statusType === "active" ? t("Active") : t("Inactive");
+  const actionText = statusType === "active" ? t("Activate") : t("Deactivate");
+
   return (
     <>
       <a
-        className="align-items-center btn btn-outline btn-sm d-flex"
+        className="align-items-center btn btn-outline btn-sm d-flex ms-2"
         onClick={() => setModal(true)}
       >
-        <RiDeleteBinLine /> {t("Delete")}
+        <RiToggleLine /> {actionText}
       </a>
       <ShowModal
         open={modal}
@@ -60,7 +72,7 @@ const TableDeleteOption = ({ isCheck, url, setIsCheck, refetch }) => {
               title="Yes"
               className="btn-theme btn-md fw-bold"
               onClick={() => {
-                handleDelete(isCheck);
+                handleStatusUpdate(isCheck, statusType === "active");
               }}
             />
           </>
@@ -68,18 +80,16 @@ const TableDeleteOption = ({ isCheck, url, setIsCheck, refetch }) => {
       >
         <div className="remove-box">
           <div className="remove-icon">
-            <RiDeleteBinLine className="icon-box" />
+            <RiToggleLine className="icon-box" />
           </div>
-          <h2 className="mt-2">{t("DeleteItem")}?</h2>
-          <p>
-            {t("ThisItemWillBeDeletedPermanently") +
-              " " +
-              t("YouCan'tUndoThisAction!!")}{" "}
-          </p>
+          <h2 className="mt-2">
+            {actionText} {t("Items")}?
+          </h2>
+          <p>{t("ThisWillChangeStatusOfSelectedItems")}</p>
         </div>
       </ShowModal>
     </>
   );
 };
 
-export default TableDeleteOption;
+export default TableStatusOption;

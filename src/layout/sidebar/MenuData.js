@@ -144,6 +144,20 @@ const MENUITEMS = [
         permission: ["vendor_wallet.index"],
       },
       {
+        title: "Payout",
+        displayTitle: "Payout",
+        icon: <RiWalletLine />,
+        type: "sub",
+        children: [
+          {
+            title: "PayoutAccount",
+            displayTitle: "Payout Account",
+            path: "/vendor/payout",
+            permission: ["payout.index"],
+          },
+        ],
+      },
+      {
         title: "CommissionHistory",
         path: "/commission",
         displayTitle: "Commission History",

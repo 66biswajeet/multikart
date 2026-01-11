@@ -14,6 +14,18 @@ const vendorOfferingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    vendor_sku: {
+      type: String,
+      default: "",
+    },
+    base_price: {
+      type: Number,
+      default: 0,
+    },
+    floor_price: {
+      type: Number,
+      default: 0,
+    },
     price: {
       type: Number,
       required: true,

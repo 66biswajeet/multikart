@@ -28,7 +28,7 @@ export async function GET(request) {
     })
       .populate("category_id", "name")
       .select(
-        "product_name slug product_thumbnail linked_vendor_offerings status"
+        "product_name slug product_thumbnail linked_vendor_offerings status createdAt base_price floor_price promo_price sku"
       )
       .lean();
 
@@ -37,15 +37,21 @@ export async function GET(request) {
       const myOffer = p.linked_vendor_offerings.find(
         (offer) => offer.vendor_id.toString() === vendorId.toString()
       );
-
+      console.log("DEBUG myOffer for product", p._id, myOffer);
       return {
         id: p._id,
         name: p.product_name,
         slug: p.slug,
         image: p.product_thumbnail,
+        category: p.category_id?.name || "N/A",
+        sku: myOffer?.vendor_sku || p.sku || "N/A",
+        base_price: myOffer?.base_price ?? 0,
+        floor_price: myOffer?.floor_price ?? 0,
+        promo_price: p.promo_price || 0,
         price: myOffer?.price || 0,
         stock: myOffer?.stock_quantity || 0,
         status: myOffer?.is_active ? 1 : 0,
+        created_at: p.createdAt,
       };
     });
 
@@ -96,11 +102,31 @@ export async function POST(request) {
       );
 
       // Create the offering object
+      // Support new warehouse_stock array from frontend
+      let stock_quantity = 0;
+      let warehouse_stock = [];
+      if (
+        Array.isArray(productData.warehouse_stock) &&
+        productData.warehouse_stock.length > 0
+      ) {
+        warehouse_stock = productData.warehouse_stock.map((ws) => ({
+          warehouse_id: ws.warehouse_id,
+          stock: Number(ws.stock) || 0,
+        }));
+        stock_quantity = warehouse_stock.reduce((sum, ws) => sum + ws.stock, 0);
+      } else {
+        stock_quantity = Number(productData.stock_quantity) || 0;
+      }
+
       const vendorOffering = {
         vendor_product_id: new mongoose.Types.ObjectId(),
         vendor_id: authCheck.authData.userId,
+        vendor_sku: productData.vendor_sku || "",
+        base_price: Number(productData.base_price) || 0,
+        floor_price: Number(productData.floor_price) || 0,
         price: Number(productData.price),
-        stock_quantity: Number(productData.stock_quantity),
+        stock_quantity,
+        warehouse_stock,
         condition: productData.condition || "new",
         shipping_info: productData.shipping_info,
         is_active: true,
@@ -198,6 +224,9 @@ export async function POST(request) {
     const vendorOffering = {
       vendor_product_id: new mongoose.Types.ObjectId(),
       vendor_id: authCheck.authData.userId,
+      vendor_sku: productData.vendor_sku || "",
+      base_price: Number(productData.base_price) || 0,
+      floor_price: Number(productData.floor_price) || 0,
       price: Number(price) || 0,
       stock_quantity: Number(stock_quantity) || 0,
       is_active: true,
@@ -238,6 +267,53 @@ export async function POST(request) {
         message: "Failed to submit product",
         error: error.message,
       },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/vendor/product
+ * Bulk delete vendor products
+ */
+export async function DELETE(request) {
+  try {
+    await dbConnect();
+
+    const authCheck = await requireAuth(request);
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
+    }
+
+    const vendorId = authCheck.authData.userId;
+    const { ids } = await request.json();
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Product IDs are required" },
+        { status: 400 }
+      );
+    }
+
+    // Update products to remove vendor offerings for this vendor
+    const result = await Product.updateMany(
+      {
+        _id: { $in: ids },
+        "linked_vendor_offerings.vendor_id": vendorId,
+      },
+      {
+        $pull: { linked_vendor_offerings: { vendor_id: vendorId } },
+      }
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: `${result.modifiedCount} products removed from your offerings`,
+    });
+  } catch (error) {
+    console.error("❌ Vendor Product DELETE Error:", error);
+    return NextResponse.json(
+      { success: false, message: error.message },
       { status: 500 }
     );
   }

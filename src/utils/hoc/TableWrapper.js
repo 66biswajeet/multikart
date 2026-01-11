@@ -119,6 +119,7 @@ const TableWrapper = (WrappedComponent) => {
                 importExport={importExport}
                 refetch={refetch}
                 showFilterDifferentPlace={showFilterDifferentPlace}
+                hideTitle={onlyTitle}
               />
               {(filterHeader?.noPageDrop !== true ||
                 filterHeader?.noSearch !== true) && (

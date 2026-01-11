@@ -1,28 +1,38 @@
 "use client";
 import React, { useState } from "react";
 import { Col, Card, CardBody } from "reactstrap";
+import { useRouter } from "next/navigation";
 import { VendorProductAPI } from "@/utils/axiosUtils/API";
 import TableWrapper from "@/utils/hoc/TableWrapper";
 import ShowTable from "@/components/table/ShowTable";
 import Loader from "@/components/commonComponent/Loader";
-import TitleWithDropDown from "@/components/common/TitleWithDropDown";
+import Btn from "@/elements/buttons/Btn";
+import { FiPlus } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 const VendorProductTable = ({ data, ...props }) => {
   const headerObj = {
-    checkBox: false,
-    isSerialNo: true,
+    checkBox: true,
+    isSerialNo: false,
     isOption: true,
     noEdit: false,
-    optionHead: { title: "Action" },
+    // FIX: Manually defining the base path for the 'Edit' action
+    optionHead: {
+      title: "Action",
+      type: "edit",
+      url: "/vendor/products",
+    },
     column: [
       { title: "Image", apiKey: "image", type: "image", class: "sm-width" },
-      { title: "Name", apiKey: "name", sorting: true, sortBy: "desc" },
+      { title: "Product", apiKey: "name", sorting: true, sortBy: "desc" },
+      { title: "SKU", apiKey: "sku", sorting: true },
+      { title: "Base Price", apiKey: "base_price", type: "price" },
+      { title: "Floor Price", apiKey: "floor_price", type: "price" },
+      { title: "Promo Price", apiKey: "promo_price", type: "price" },
       { title: "My Price", apiKey: "price", type: "price" },
       { title: "My Stock", apiKey: "stock" },
       { title: "Status", apiKey: "status", type: "switch" },
     ],
-    // --- THIS IS THE FIX ---
-    // Extract the array from the pagination object (data.data)
     data: data?.data || [],
   };
 
@@ -34,6 +44,10 @@ const VendorProductTable = ({ data, ...props }) => {
       headerData={headerObj}
       editPermission={true}
       destroyPermission={true}
+      // This tells the component to look inside 'vendor/products/edit'
+      moduleName="products"
+      type="products"
+      url={VendorProductAPI}
     />
   );
 };
@@ -42,18 +56,26 @@ const VendorProductTableWrapped = TableWrapper(VendorProductTable);
 
 const VendorProducts = () => {
   const [isCheck, setIsCheck] = useState([]);
+  const router = useRouter();
+  const { t } = useTranslation("common");
 
   return (
     <Col sm="12">
       <Card>
         <CardBody>
-          <TitleWithDropDown
-            moduleName="My Products"
-            pathName="/vendor/products/create"
-          />
+          <div className="title-header option-title mb-3">
+            <h5>{t("My Products")}</h5>
+            <Btn
+              className="align-items-center btn-theme add-button"
+              title={t("Add") + " " + t("My Products")}
+              onClick={() => router.push("/vendor/products/create")}
+            >
+              <FiPlus />
+            </Btn>
+          </div>
           <VendorProductTableWrapped
             url={VendorProductAPI}
-            moduleName="My Products"
+            moduleName="products"
             isCheck={isCheck}
             setIsCheck={setIsCheck}
             onlyTitle={true}

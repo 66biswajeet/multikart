@@ -8,9 +8,13 @@ import {
   RiWalletLine,
   RiBarChartLine,
   RiCustomerServiceLine,
+  RiPercentLine,
+  RiArchiveLine,
   RiUserSettingsLine,
   RiUserLine, // <-- 1. ICON IS IMPORTED
 } from "react-icons/ri";
+
+import SidebarDropdown from "./SidebarDropdown";
 
 const VendorSidebar = () => {
   const pathname = usePathname();
@@ -28,8 +32,35 @@ const VendorSidebar = () => {
       path: "/vendor/products",
       icon: <RiShoppingBagLine />,
     },
+    { title: "Discounts", path: "/vendor/discounts", icon: <RiPercentLine /> },
+    {
+      title: "Inventory",
+      path: "/vendor/inventory",
+      icon: <RiArchiveLine />, // Or any inventory-related icon
+      type: "link",
+    },
     { title: "Orders", path: "/vendor/orders", icon: <RiShoppingBagLine /> },
-    { title: "Payout", path: "/vendor/payout", icon: <RiWalletLine /> },
+    {
+      title: "Payout",
+      icon: <RiWalletLine />,
+      children: [
+        {
+          title: "Payout Account",
+          path: "/vendor/payout",
+          icon: <RiWalletLine />,
+        },
+        {
+          title: "Payout Request",
+          path: "/vendor/payout/request",
+          icon: <RiWalletLine />,
+        },
+        {
+          title: "Payout History",
+          path: "/vendor/payout/history",
+          icon: <RiWalletLine />,
+        },
+      ],
+    },
     { title: "Reports", path: "/vendor/reports", icon: <RiBarChartLine /> },
     {
       title: "Support",
@@ -51,17 +82,32 @@ const VendorSidebar = () => {
       <nav className="sidebar-main">
         <div id="sidebar-menu">
           <ul className="sidebar-links">
-            {menuItems.map((item) => (
-              <li key={item.path}>
-                <Link
-                  href={item.path}
-                  className={pathname === item.path ? "active" : ""}
-                >
-                  {item.icon}
-                  <span>{item.title}</span>
-                </Link>
-              </li>
-            ))}
+
+            {menuItems.map((item, idx) => {
+              const isActiveParent = item.children && item.children.some(child => pathname === child.path);
+              if (item.children) {
+                return (
+                  <SidebarDropdown
+                    key={item.title}
+                    item={item}
+                    isActiveParent={isActiveParent}
+                    idx={idx}
+                  />
+                );
+              } else {
+                return (
+                  <li key={item.path}>
+                    <Link
+                      href={item.path}
+                      className={pathname === item.path ? "active" : ""}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </Link>
+                  </li>
+                );
+              }
+            })}
 
             {/* --- 3. ADD SEPARATOR AND LINK --- */}
             <li className="sidebar-list">

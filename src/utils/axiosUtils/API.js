@@ -179,6 +179,7 @@ export const VariantAPI = "variant"; // <--- ADD THIS LINE
 
 //Vendor api
 export const VendorProductAPI = "/vendor/product";
-
+// Add this if it doesn't exist
+export const VendorOrderAPI = "/order";
 // // tags api
 // export const tag = "/tag";

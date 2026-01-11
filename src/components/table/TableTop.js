@@ -8,15 +8,41 @@ import CalenderFilter from "./CalenderFilter";
 import MultipleFilter from "./MultipleFilter";
 import TableDeleteOption from "./TableDeleteOption";
 import TableDuplicateOption from "./TableDuplicateOption";
+import TableStatusOption from "./TableStatusOption";
 
 const TableTop = (props) => {
-  const { differentFilter, setPaginate, showFilterDifferentPlace, setSearch, paginate, url, isCheck, setIsCheck, isReplicate, refetch, dateRange, date, setDate, filterHeader, keyInPermission, advanceFilter } = props;
-  const [edit, destroy] = usePermissionCheck(["edit", "destroy"], keyInPermission ? keyInPermission : "");
+  const {
+    differentFilter,
+    setPaginate,
+    showFilterDifferentPlace,
+    setSearch,
+    paginate,
+    url,
+    isCheck,
+    setIsCheck,
+    isReplicate,
+    refetch,
+    dateRange,
+    date,
+    setDate,
+    filterHeader,
+    keyInPermission,
+    advanceFilter,
+  } = props;
+  const [edit, destroy] = usePermissionCheck(
+    ["edit", "destroy"],
+    keyInPermission ? keyInPermission : ""
+  );
   const { t } = useTranslation("common");
   const [input, setInput] = useState();
   const [showAdvanceFilter, setShowAdvanceFilter] = useState(true);
   const [text, setText] = useState("");
   const [tc, setTc] = useState(null);
+
+  // For vendor products, always allow bulk actions
+  const allowBulkDelete = destroy || url?.includes("/vendor/product");
+  const allowBulkEdit = edit || url?.includes("/vendor/product");
+
   useEffect(() => {
     setInput(paginate);
   }, [paginate]);
@@ -38,13 +64,50 @@ const TableTop = (props) => {
             >
               <Label>
                 {t("Show")}:
-                <select className="form-control" onChange={(e) => setPaginate(e.target.value)}>
-                  <option>15</option> <option>25</option> <option>50</option> <option>100</option>
+                <select
+                  className="form-control"
+                  onChange={(e) => setPaginate(e.target.value)}
+                >
+                  <option>15</option> <option>25</option> <option>50</option>{" "}
+                  <option>100</option>
                 </select>
               </Label>
               <span>{t("Itemsperpage")}</span>
-              {destroy && isCheck?.length > 0 && <TableDeleteOption url={url} setIsCheck={setIsCheck} isCheck={isCheck} />}
-              {edit && isCheck?.length > 0 && isReplicate && <TableDuplicateOption isReplicate={isReplicate} url={url} isCheck={isCheck} setIsCheck={setIsCheck} refetch={refetch} />}
+              {allowBulkDelete && isCheck?.length > 0 && (
+                <TableDeleteOption
+                  url={url}
+                  setIsCheck={setIsCheck}
+                  isCheck={isCheck}
+                  refetch={refetch}
+                />
+              )}
+              {allowBulkEdit && isCheck?.length > 0 && (
+                <TableStatusOption
+                  url={url}
+                  setIsCheck={setIsCheck}
+                  isCheck={isCheck}
+                  statusType="active"
+                  refetch={refetch}
+                />
+              )}
+              {allowBulkEdit && isCheck?.length > 0 && (
+                <TableStatusOption
+                  url={url}
+                  setIsCheck={setIsCheck}
+                  isCheck={isCheck}
+                  statusType="inactive"
+                  refetch={refetch}
+                />
+              )}
+              {edit && isCheck?.length > 0 && isReplicate && (
+                <TableDuplicateOption
+                  isReplicate={isReplicate}
+                  url={url}
+                  isCheck={isCheck}
+                  setIsCheck={setIsCheck}
+                  refetch={refetch}
+                />
+              )}
             </Form>
           </div>
         )}
@@ -71,7 +134,10 @@ const TableTop = (props) => {
           )}
           {advanceFilter && (
             <div className="top-panel-selection">
-              <Btn className="align-items-center btn d-flex h-100 btn-light-bg fs-5 px-3 py-1" onClick={() => setShowAdvanceFilter((prev) => !prev)}>
+              <Btn
+                className="align-items-center btn d-flex h-100 btn-light-bg fs-5 px-3 py-1"
+                onClick={() => setShowAdvanceFilter((prev) => !prev)}
+              >
                 <RiFilter3Line />
               </Btn>
             </div>
@@ -80,7 +146,12 @@ const TableTop = (props) => {
         {showFilterDifferentPlace && filterHeader?.customFilter}
       </div>
       {differentFilter && differentFilter}
-      {advanceFilter && showAdvanceFilter ? <MultipleFilter showAdvanceFilter={showAdvanceFilter} advanceFilter={advanceFilter} /> : null}
+      {advanceFilter && showAdvanceFilter ? (
+        <MultipleFilter
+          showAdvanceFilter={showAdvanceFilter}
+          advanceFilter={advanceFilter}
+        />
+      ) : null}
     </>
   );
 };

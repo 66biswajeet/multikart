@@ -1,0 +1,234 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import request from "@/utils/axiosUtils";
+import Btn from "@/elements/buttons/Btn";
+import SimpleInputField from "@/components/inputFields/SimpleInputField";
+import SearchableSelectInput from "@/components/inputFields/SearchableSelectInput";
+
+export default function VendorProductEditPage() {
+  const router = useRouter();
+  const params = useParams();
+  const productId = params.productId;
+  const [product, setProduct] = useState(null);
+  const [myOffer, setMyOffer] = useState(null);
+  const [warehouses, setWarehouses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      // Fetch product details
+      const res = await request({
+        url: `/vendor/product/${productId}`,
+        method: "GET",
+      });
+      setProduct(res.data?.product || null);
+      setMyOffer(res.data?.myOffer || null);
+      // Fetch warehouses
+      const whRes = await request({ url: "/warehouse", method: "get" });
+      setWarehouses(whRes.data?.data || []);
+      setLoading(false);
+    }
+    fetchData();
+  }, [productId]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!product || !myOffer) return <div>Product not found.</div>;
+
+  const EditSchema = Yup.object().shape({
+    vendor_sku: Yup.string().required("Vendor SKU is required"),
+    base_price: Yup.number().required("Base Price is required").min(0),
+    floor_price: Yup.number().required("Floor Price is required").min(0),
+    price: Yup.number().required("Price is required").min(1),
+    condition: Yup.string().required("Condition is required"),
+    shipping_info: Yup.string().required("Shipping info is required"),
+    warehouse_stock: Yup.array().of(
+      Yup.object().shape({
+        warehouse_id: Yup.string().required(),
+        stock: Yup.number().min(0).required(),
+      })
+    ),
+  });
+
+  return (
+    <div className="container py-4">
+      <div
+        className="bg-white rounded shadow-sm p-4 mx-auto"
+        style={{ maxWidth: 700 }}
+      >
+        <h2 className="mb-4 fw-bold text-primary">
+          Edit Vendor Product:{" "}
+          <span className="text-dark">{product.product_name}</span>
+        </h2>
+        <Formik
+          initialValues={{
+            vendor_sku: myOffer.vendor_sku || "",
+            base_price: myOffer.base_price || 0,
+            floor_price: myOffer.floor_price || 0,
+            price: myOffer.price || 0,
+            warehouse_stock: myOffer.warehouse_stock || [],
+            condition: myOffer.condition || "new",
+            shipping_info: myOffer.shipping_info || "",
+          }}
+          validationSchema={EditSchema}
+          onSubmit={async (values, { setSubmitting }) => {
+            try {
+              await request({
+                url: `/vendor/product/${productId}`,
+                method: "PATCH",
+                data: values,
+              });
+              router.push("/vendor/products");
+            } catch (e) {
+              alert("Failed to update product");
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+        >
+          {({ isSubmitting, values, setFieldValue }) => (
+            <Form className="theme-form">
+              <div className="row g-3">
+                <div className="col-12">
+                  <SimpleInputField
+                    nameList={[
+                      {
+                        name: "vendor_sku",
+                        title: "Vendor SKU",
+                        type: "text",
+                        require: "true",
+                      },
+                      {
+                        name: "base_price",
+                        title: "Base Price (MVR)",
+                        type: "number",
+                        require: "true",
+                      },
+                      {
+                        name: "floor_price",
+                        title: "Floor Price (MVR)",
+                        type: "number",
+                        require: "true",
+                      },
+                      {
+                        name: "price",
+                        title: "Your Price (MVR)",
+                        type: "number",
+                        require: "true",
+                      },
+                      {
+                        name: "shipping_info",
+                        title: "Shipping Information",
+                        type: "text",
+                        require: "true",
+                      },
+                    ]}
+                  />
+                </div>
+                {warehouses.length > 0 && (
+                  <div className="col-12">
+                    <label className="form-label">Warehouses & Stock</label>
+                    {warehouses.map((wh) => (
+                      <div
+                        key={wh._id}
+                        className="d-flex align-items-center mb-2"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={values.warehouse_stock.some(
+                            (w) => w.warehouse_id === wh._id
+                          )}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFieldValue("warehouse_stock", [
+                                ...values.warehouse_stock,
+                                { warehouse_id: wh._id, stock: 0 },
+                              ]);
+                            } else {
+                              setFieldValue(
+                                "warehouse_stock",
+                                values.warehouse_stock.filter(
+                                  (w) => w.warehouse_id !== wh._id
+                                )
+                              );
+                            }
+                          }}
+                          className="me-2"
+                        />
+                        <span className="me-2">{wh.name}</span>
+                        {values.warehouse_stock.some(
+                          (w) => w.warehouse_id === wh._id
+                        ) && (
+                          <input
+                            type="number"
+                            min="0"
+                            value={
+                              values.warehouse_stock.find(
+                                (w) => w.warehouse_id === wh._id
+                              )?.stock || 0
+                            }
+                            onChange={(e) => {
+                              setFieldValue(
+                                "warehouse_stock",
+                                values.warehouse_stock.map((w) =>
+                                  w.warehouse_id === wh._id
+                                    ? { ...w, stock: Number(e.target.value) }
+                                    : w
+                                )
+                              );
+                            }}
+                            placeholder="Stock"
+                            style={{ width: 80 }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="col-12">
+                  <SearchableSelectInput
+                    nameList={[
+                      {
+                        name: "condition",
+                        title: "Condition",
+                        require: "true",
+                        inputprops: {
+                          name: "condition",
+                          id: "condition",
+                          options: [
+                            { id: "new", name: "New" },
+                            { id: "refurbished", name: "Refurbished" },
+                          ],
+                        },
+                      },
+                    ]}
+                  />
+                </div>
+                <div className="col-12 d-flex justify-content-end gap-2 mt-4">
+                  <Btn
+                    className="btn-secondary"
+                    onClick={() => router.push("/vendor/products")}
+                    type="button"
+                  >
+                    Cancel
+                  </Btn>
+                  <Btn
+                    className="btn-primary"
+                    type="submit"
+                    loading={isSubmitting}
+                  >
+                    Update
+                  </Btn>
+                </div>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </div>
+    </div>
+  );
+}

@@ -17,6 +17,7 @@ const TableTitle = ({
   refetch,
   exportButton,
   showFilterDifferentPlace,
+  hideTitle,
 }) => {
   const { t } = useTranslation("common");
   const router = useRouter();
@@ -24,11 +25,13 @@ const TableTitle = ({
   const [create] = usePermissionCheck(["create"], moduleName.toLowerCase());
   return (
     <div className="title-header option-title">
-      <h5>
-        {filterHeader?.customTitle
-          ? t(filterHeader?.customTitle)
-          : t(Pluralize(moduleName))}
-      </h5>
+      {!hideTitle && (
+        <h5>
+          {filterHeader?.customTitle
+            ? t(filterHeader?.customTitle)
+            : t(Pluralize(moduleName))}
+        </h5>
+      )}
       {importExport && (
         <ImportExport
           importExport={importExport}
