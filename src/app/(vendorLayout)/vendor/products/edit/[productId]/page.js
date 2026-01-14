@@ -17,27 +17,43 @@ export default function VendorProductEditPage() {
   const [myOffer, setMyOffer] = useState(null);
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      // Fetch product details
-      const res = await request({
-        url: `/vendor/product/${productId}`,
-        method: "GET",
-      });
-      setProduct(res.data?.product || null);
-      setMyOffer(res.data?.myOffer || null);
-      // Fetch warehouses
-      const whRes = await request({ url: "/warehouse", method: "get" });
-      setWarehouses(whRes.data?.data || []);
-      setLoading(false);
+      setError(null);
+      try {
+        // Fetch product details
+        console.log("🔄 Fetching product:", productId);
+        const res = await request({
+          url: `/vendor/product/${productId}`,
+          method: "GET",
+        });
+
+        if (!res.data?.success) {
+          throw new Error(res.data?.message || "Failed to fetch product");
+        }
+
+        setProduct(res.data?.product || null);
+        setMyOffer(res.data?.myOffer || null);
+
+        // Fetch warehouses
+        const whRes = await request({ url: "/warehouse", method: "get" });
+        setWarehouses(whRes.data?.data || []);
+      } catch (err) {
+        console.error("❌ Error fetching product:", err);
+        setError(err.message || "Failed to load product details");
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
   }, [productId]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!product || !myOffer) return <div>Product not found.</div>;
+  if (loading) return <div className="container py-4"><div className="alert alert-info">Loading product details...</div></div>;
+  if (error) return <div className="container py-4"><div className="alert alert-danger">Error: {error}</div></div>;
+  if (!product || !myOffer) return <div className="container py-4"><div className="alert alert-warning">Product or vendor offer not found.</div></div>;
 
   const EditSchema = Yup.object().shape({
     vendor_sku: Yup.string().required("Vendor SKU is required"),
