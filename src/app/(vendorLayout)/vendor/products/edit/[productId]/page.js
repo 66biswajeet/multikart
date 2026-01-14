@@ -51,9 +51,26 @@ export default function VendorProductEditPage() {
     fetchData();
   }, [productId]);
 
-  if (loading) return <div className="container py-4"><div className="alert alert-info">Loading product details...</div></div>;
-  if (error) return <div className="container py-4"><div className="alert alert-danger">Error: {error}</div></div>;
-  if (!product || !myOffer) return <div className="container py-4"><div className="alert alert-warning">Product or vendor offer not found.</div></div>;
+  if (loading)
+    return (
+      <div className="container py-4">
+        <div className="alert alert-info">Loading product details...</div>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="container py-4">
+        <div className="alert alert-danger">Error: {error}</div>
+      </div>
+    );
+  if (!product || !myOffer)
+    return (
+      <div className="container py-4">
+        <div className="alert alert-warning">
+          Product or vendor offer not found.
+        </div>
+      </div>
+    );
 
   const EditSchema = Yup.object().shape({
     vendor_sku: Yup.string().required("Vendor SKU is required"),

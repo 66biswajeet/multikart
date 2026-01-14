@@ -17,7 +17,7 @@ export async function GET(request, { params }) {
       console.error("❌ Auth check failed:", authCheck.errorResponse);
       return authCheck.errorResponse;
     }
-    
+
     const vendorId = authCheck.authData.userId;
     console.log("✓ Authenticated vendor:", vendorId);
 
@@ -60,7 +60,11 @@ export async function GET(request, { params }) {
     }
 
     console.log("✓ API response prepared successfully");
-    return NextResponse.json({ success: true, product, myOffer: myOffer || null });
+    return NextResponse.json({
+      success: true,
+      product,
+      myOffer: myOffer || null,
+    });
   } catch (error) {
     console.error("❌ API Error:", error.message, error.stack);
     return NextResponse.json(
@@ -89,7 +93,7 @@ export async function PATCH(request, { params }) {
 
     // Get and validate productId - await params (Next.js 15+ requirement)
     const { productId } = await params;
-    
+
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       console.error("❌ Invalid ObjectId format:", productId);

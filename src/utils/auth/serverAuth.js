@@ -17,16 +17,21 @@ export async function extractAuthFromRequest(request) {
     ? authHeader.substring(7)
     : request.cookies?.get("uat")?.value;
 
-  console.log("🔐 [extractAuth] Token source:", authHeader ? "Authorization header" : "Cookie (uat)");
+  console.log(
+    "🔐 [extractAuth] Token source:",
+    authHeader ? "Authorization header" : "Cookie (uat)"
+  );
   console.log("🔐 [extractAuth] Token present:", token ? "✓ Yes" : "✗ No");
 
   if (token) {
     try {
       // Use environment variable - MUST be set in Vercel
       const secret = process.env.JWT_SECRET;
-      
+
       if (!secret) {
-        console.error("❌ [extractAuth] JWT_SECRET not found in environment variables!");
+        console.error(
+          "❌ [extractAuth] JWT_SECRET not found in environment variables!"
+        );
         throw new Error("JWT_SECRET is not configured");
       }
 
@@ -38,10 +43,18 @@ export async function extractAuthFromRequest(request) {
       email = decoded.email;
       role = decoded.role || null;
 
-      console.log("✅ [extractAuth] JWT verified:", { userId, email, isAdmin, role });
+      console.log("✅ [extractAuth] JWT verified:", {
+        userId,
+        email,
+        isAdmin,
+        role,
+      });
       return { isAdmin, userId, email, role };
     } catch (jwtError) {
-      console.warn("⚠️ [extractAuth] JWT verification failed:", jwtError.message);
+      console.warn(
+        "⚠️ [extractAuth] JWT verification failed:",
+        jwtError.message
+      );
 
       // Fallback to cookie data
       const accountCookie = request.cookies?.get("account")?.value;
@@ -62,7 +75,10 @@ export async function extractAuthFromRequest(request) {
           });
           return { isAdmin, userId, email, role };
         } catch (cookieError) {
-          console.error("❌ [extractAuth] Cookie parsing failed:", cookieError.message);
+          console.error(
+            "❌ [extractAuth] Cookie parsing failed:",
+            cookieError.message
+          );
         }
       }
     }
@@ -160,7 +176,10 @@ export async function requireAuth(request) {
     return { success: false, errorResponse };
   }
 
-  console.log("✅ [requireAuth] Authentication successful for userId:", authData.userId);
+  console.log(
+    "✅ [requireAuth] Authentication successful for userId:",
+    authData.userId
+  );
   // Pass along the authData (which includes userId, email, isAdmin)
   return { success: true, authData: authData };
 }
