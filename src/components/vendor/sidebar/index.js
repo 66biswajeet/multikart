@@ -43,6 +43,7 @@ const VendorSidebar = () => {
     {
       title: "Payout",
       icon: <RiWalletLine />,
+      type: "sub",
       children: [
         {
           title: "Payout Account",
@@ -82,9 +83,10 @@ const VendorSidebar = () => {
       <nav className="sidebar-main">
         <div id="sidebar-menu">
           <ul className="sidebar-links">
-
             {menuItems.map((item, idx) => {
-              const isActiveParent = item.children && item.children.some(child => pathname === child.path);
+              const isActiveParent =
+                item.children &&
+                item.children.some((child) => pathname === child.path);
               if (item.children) {
                 return (
                   <SidebarDropdown
