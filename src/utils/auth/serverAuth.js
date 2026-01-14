@@ -17,25 +17,15 @@ export async function extractAuthFromRequest(request) {
     ? authHeader.substring(7)
     : request.cookies?.get("uat")?.value;
 
-  console.log(
-    "🔐 [extractAuth] Token source:",
-    authHeader ? "Authorization header" : "Cookie (uat)"
-  );
-  console.log("🔐 [extractAuth] Token present:", token ? "✓ Yes" : "✗ No");
-
   if (token) {
     try {
       // Use environment variable - MUST be set in Vercel
       const secret = process.env.JWT_SECRET;
 
       if (!secret) {
-        console.error(
-          "❌ [extractAuth] JWT_SECRET not found in environment variables!"
-        );
         throw new Error("JWT_SECRET is not configured");
       }
 
-      console.log("🔐 [extractAuth] JWT_SECRET found, verifying token...");
       const decoded = jwt.verify(token, secret);
 
       isAdmin = decoded.isAdmin === true;
@@ -43,48 +33,26 @@ export async function extractAuthFromRequest(request) {
       email = decoded.email;
       role = decoded.role || null;
 
-      console.log("✅ [extractAuth] JWT verified:", {
-        userId,
-        email,
-        isAdmin,
-        role,
-      });
       return { isAdmin, userId, email, role };
     } catch (jwtError) {
-      console.warn(
-        "⚠️ [extractAuth] JWT verification failed:",
-        jwtError.message
-      );
-
       // Fallback to cookie data
       const accountCookie = request.cookies?.get("account")?.value;
       if (accountCookie) {
         try {
-          console.log("🔐 [extractAuth] Trying account cookie fallback...");
           const accountData = JSON.parse(decodeURIComponent(accountCookie));
           isAdmin = accountData.isAdmin === true;
           userId = accountData._id;
           email = accountData.email;
           role = accountData.role || null;
 
-          console.log("✅ [extractAuth] Using cookie fallback:", {
-            userId,
-            email,
-            isAdmin,
-            role,
-          });
           return { isAdmin, userId, email, role };
         } catch (cookieError) {
-          console.error(
-            "❌ [extractAuth] Cookie parsing failed:",
-            cookieError.message
-          );
+          // Continue to return empty auth
         }
       }
     }
   }
 
-  console.warn("⚠️ [extractAuth] No valid authentication found");
   return { isAdmin: false, userId: null, email: null, role: null };
 }
 
@@ -141,26 +109,11 @@ export async function requireAdmin(request) {
  * @returns {Promise<{success: boolean, authData?: Object, errorResponse?: Response}>}
  */
 export async function requireAuth(request) {
-  console.log("🔐 [requireAuth] Starting authentication check");
-  console.log("🔐 [requireAuth] Request URL:", request.url);
-  console.log("🔐 [requireAuth] Headers present:", {
-    authorization: request.headers.get("authorization") ? "✓ Yes" : "✗ No",
-    cookie: request.headers.get("cookie") ? "✓ Yes" : "✗ No",
-  });
-
   // Use your existing function to get auth data
   const authData = await extractAuthFromRequest(request);
 
-  console.log("🔐 [requireAuth] Extracted auth data:", {
-    userId: authData.userId ? "✓ Present" : "✗ Missing",
-    email: authData.email,
-    isAdmin: authData.isAdmin,
-    role: authData.role,
-  });
-
   // Fail if no userId is found
   if (!authData.userId) {
-    console.error("❌ [requireAuth] No userId found - authentication failed");
     const errorResponse = new Response(
       JSON.stringify({
         success: false,
@@ -176,10 +129,6 @@ export async function requireAuth(request) {
     return { success: false, errorResponse };
   }
 
-  console.log(
-    "✅ [requireAuth] Authentication successful for userId:",
-    authData.userId
-  );
   // Pass along the authData (which includes userId, email, isAdmin)
   return { success: true, authData: authData };
 }

@@ -25,7 +25,6 @@ export default function VendorProductEditPage() {
       setError(null);
       try {
         // Fetch product details
-        console.log("🔄 Fetching product:", productId);
         const res = await request({
           url: `/vendor/product/${productId}`,
           method: "GET",
@@ -42,7 +41,6 @@ export default function VendorProductEditPage() {
         const whRes = await request({ url: "/warehouse", method: "get" });
         setWarehouses(whRes.data?.data || []);
       } catch (err) {
-        console.error("❌ Error fetching product:", err);
         setError(err.message || "Failed to load product details");
       } finally {
         setLoading(false);

@@ -9,25 +9,20 @@ export async function GET(request, { params }) {
   try {
     // Connect to database
     await dbConnect();
-    console.log("✓ Database connected");
 
     // Check authentication
     const authCheck = await requireAuth(request);
     if (!authCheck.success) {
-      console.error("❌ Auth check failed:", authCheck.errorResponse);
       return authCheck.errorResponse;
     }
 
     const vendorId = authCheck.authData.userId;
-    console.log("✓ Authenticated vendor:", vendorId);
 
     // Get and validate productId - await params (Next.js 15+ requirement)
     const { productId } = await params;
-    console.log("📦 Raw productId from params:", productId);
 
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      console.error("❌ Invalid ObjectId format:", productId);
       return NextResponse.json(
         { success: false, message: "Invalid product ID format" },
         { status: 400 }
@@ -36,14 +31,11 @@ export async function GET(request, { params }) {
 
     // Convert to ObjectId if needed
     const objectId = new mongoose.Types.ObjectId(productId);
-    console.log("✓ Converted to ObjectId:", objectId);
 
     // Fetch product
     const product = await Product.findById(objectId).lean();
-    console.log("📦 Product found:", product ? "Yes" : "No");
 
     if (!product) {
-      console.error("❌ Product not found for ID:", productId);
       return NextResponse.json(
         { success: false, message: "Product not found" },
         { status: 404 }
@@ -55,18 +47,12 @@ export async function GET(request, { params }) {
       (offer) => offer.vendor_id.toString() === vendorId.toString()
     );
 
-    if (!myOffer) {
-      console.warn("⚠️ Vendor has no offering for this product");
-    }
-
-    console.log("✓ API response prepared successfully");
     return NextResponse.json({
       success: true,
       product,
       myOffer: myOffer || null,
     });
   } catch (error) {
-    console.error("❌ API Error:", error.message, error.stack);
     return NextResponse.json(
       { success: false, message: "Server error", error: error.message },
       { status: 500 }
@@ -79,24 +65,20 @@ export async function PATCH(request, { params }) {
   try {
     // Connect to database
     await dbConnect();
-    console.log("✓ Database connected");
 
     // Check authentication
     const authCheck = await requireAuth(request);
     if (!authCheck.success) {
-      console.error("❌ Auth check failed");
       return authCheck.errorResponse;
     }
 
     const vendorId = authCheck.authData.userId;
-    console.log("✓ Authenticated vendor:", vendorId);
 
     // Get and validate productId - await params (Next.js 15+ requirement)
     const { productId } = await params;
 
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      console.error("❌ Invalid ObjectId format:", productId);
       return NextResponse.json(
         { success: false, message: "Invalid product ID format" },
         { status: 400 }
@@ -105,7 +87,6 @@ export async function PATCH(request, { params }) {
 
     const objectId = new mongoose.Types.ObjectId(productId);
     const data = await request.json();
-    console.log("📝 Update data received:", Object.keys(data));
 
     // Build update fields
     const updateFields = {};
@@ -126,8 +107,6 @@ export async function PATCH(request, { params }) {
       updateFields["linked_vendor_offerings.$.warehouse_stock"] =
         data.warehouse_stock;
 
-    console.log("📝 Update fields:", Object.keys(updateFields));
-
     // Update product
     const updated = await Product.findOneAndUpdate(
       { _id: objectId, "linked_vendor_offerings.vendor_id": vendorId },
@@ -136,17 +115,90 @@ export async function PATCH(request, { params }) {
     );
 
     if (!updated) {
-      console.error("❌ Update failed - product or vendor offering not found");
       return NextResponse.json(
         { success: false, message: "Product or vendor offering not found" },
         { status: 404 }
       );
     }
 
-    console.log("✓ Product updated successfully");
     return NextResponse.json({ success: true, message: "Product updated" });
   } catch (error) {
-    console.error("❌ PATCH Error:", error.message, error.stack);
+    return NextResponse.json(
+      { success: false, message: "Server error", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/vendor/product/[productId] - Alias for PATCH (same functionality)
+export async function PUT(request, { params }) {
+  return PATCH(request, { params });
+}
+
+// DELETE /api/vendor/product/[productId] - Vendor can delete their own offering
+export async function DELETE(request, { params }) {
+  try {
+    // Connect to database
+    await dbConnect();
+
+    // Check authentication
+    const authCheck = await requireAuth(request);
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
+    }
+
+    const vendorId = authCheck.authData.userId;
+
+    // Get and validate productId - await params (Next.js 15+ requirement)
+    const { productId } = await params;
+
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid product ID format" },
+        { status: 400 }
+      );
+    }
+
+    const objectId = new mongoose.Types.ObjectId(productId);
+
+    // Find the product and remove vendor's offering
+    const updated = await Product.findByIdAndUpdate(
+      objectId,
+      {
+        $pull: {
+          linked_vendor_offerings: {
+            vendor_id: vendorId,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if vendor's offering was actually removed
+    const hadOffering = updated.linked_vendor_offerings.some(
+      (offer) => offer.vendor_id.toString() === vendorId.toString()
+    );
+
+    if (hadOffering) {
+      return NextResponse.json(
+        { success: false, message: "Vendor offering not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Your product offering has been deleted successfully",
+    });
+  } catch (error) {
     return NextResponse.json(
       { success: false, message: "Server error", error: error.message },
       { status: 500 }

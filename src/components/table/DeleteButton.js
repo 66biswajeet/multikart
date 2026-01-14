@@ -20,7 +20,11 @@ const DeleteButton = ({ id, mutate, noImage }) => {
       let apiUrl = "";
       let entityName = "";
 
-      if (currentPath.includes("/product")) {
+      // Check for vendor products first (must be before /product check)
+      if (currentPath.includes("/vendor/products")) {
+        apiUrl = `/api/vendor/product/${id}`;
+        entityName = "Product";
+      } else if (currentPath.includes("/product")) {
         apiUrl = `/api/product/${id}`;
         entityName = "Product";
       } else if (currentPath.includes("/category")) {
