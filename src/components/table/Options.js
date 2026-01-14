@@ -95,11 +95,13 @@ const Options = ({
                         <RiPencilLine />
                       </Link>
                     ) : (
-                      // Fix: If on vendor/products, use /vendor/products/edit/[id]
+                      // Fix: If on vendor/products or vendor/discounts, use full path
                       <Link
                         href={
                           pathname.startsWith("/vendor/products")
                             ? `/vendor/products/edit/${itemId}`
+                            : pathname.startsWith("/vendor/discounts")
+                            ? `/vendor/discounts/edit/${itemId}`
                             : `/${pathname.split("/")[1]}/edit/${itemId}`
                         }
                       >

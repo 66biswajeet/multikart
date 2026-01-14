@@ -5,7 +5,7 @@ import Order from "@/models/Order";
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const { orderId } = params;
+    const { orderId } = await params;
     // Get user identity from headers (set by middleware)
     const userId = request.headers.get("x-user-id");
     const isAdmin = request.headers.get("x-is-admin") === "true";

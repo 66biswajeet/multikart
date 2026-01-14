@@ -10,11 +10,10 @@ import {
   FormGroup,
   Label,
   Button,
-  Table,
-  Input,
 } from "reactstrap";
 import { Formik, Form, Field } from "formik";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 import { FiPlus } from "react-icons/fi";
 import { RiPencilLine, RiDeleteBinLine } from "react-icons/ri";
 
@@ -24,7 +23,6 @@ import Loader from "@/components/commonComponent/Loader";
 import Btn from "@/elements/buttons/Btn";
 import request from "@/utils/axiosUtils";
 import useCustomQuery from "@/utils/hooks/useCustomQuery";
-import Status from "@/components/table/Status";
 import { toast } from "react-toastify";
 import { dateFormat } from "@/utils/customFunctions/DateFormat";
 
@@ -33,52 +31,24 @@ const apiRoute = "/vendor/discount";
 const DiscountTable = ({
   data,
   refetch,
-  isCheck,
-  setIsCheck,
   setEditingRule,
   setModal,
   ...props
 }) => {
   const { t } = useTranslation("common");
-  const [selectedRows, setSelectedRows] = useState([]);
+  const router = useRouter();
 
-  // Fetch Categories & Products for the modal dropdowns
-  const { data: categoryData } = useCustomQuery(["categories"], () =>
-    request({ url: "/category" })
-  );
-  const { data: productData } = useCustomQuery(["vendorProducts"], () =>
-    request({ url: "/product" })
-  );
+  if (data === null || data === undefined) {
+    return <Loader />;
+  }
 
-  if (data === null || data === undefined) return <Loader />;
-
-  const tableData = Array.isArray(data) ? data : [];
-
-  console.log("DiscountTable - data prop:", data);
-  console.log("DiscountTable - tableData:", tableData);
-
-  // Handle row checkbox
-  const handleRowCheck = (itemId) => {
-    if (selectedRows.includes(itemId)) {
-      setSelectedRows(selectedRows.filter((id) => id !== itemId));
-      setIsCheck(isCheck.filter((id) => id !== itemId));
-    } else {
-      setSelectedRows([...selectedRows, itemId]);
-      setIsCheck([...isCheck, itemId]);
-    }
-  };
-
-  // Handle select all
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = tableData.map((item) => item._id);
-      setSelectedRows(allIds);
-      setIsCheck(allIds);
-    } else {
-      setSelectedRows([]);
-      setIsCheck([]);
-    }
-  };
+  // TableWrapper passes the paginated response object
+  // Extract the actual data array from data.data
+  const tableData = Array.isArray(data) 
+    ? data 
+    : Array.isArray(data?.data) 
+    ? data.data 
+    : [];
 
   // Delete handler
   const handleDelete = async (id) => {
@@ -99,89 +69,53 @@ const DiscountTable = ({
     }
   };
 
+  // Configure table header with actions
+  const headerObj = {
+    checkBox: true,
+    isSerialNo: false,
+    isOption: true,
+    noEdit: false,
+    optionHead: {
+      title: "Action",
+      type: "edit",
+      url: "/vendor/discounts/edit", // Base URL for edit route
+    },
+    column: [
+      { title: "Rule Name", apiKey: "rule_name", sorting: true, sortBy: "desc" },
+      { title: "Application Type", apiKey: "application_type", sorting: true },
+      { title: "Start Date", apiKey: "start_date", type: "date" },
+      { title: "End Date", apiKey: "end_date", type: "date" },
+      {
+        title: "Value",
+        apiKey: "value",
+        sorting: false,
+      },
+      { title: "Status", apiKey: "status", type: "switch" },
+    ],
+    data: tableData.map((item) => ({
+      ...item,
+      id: item._id || item.id,
+      // Transform value to include percentage/amount suffix
+      value: `${item.value}${item.discount_type === "Percentage" ? "%" : " Amt"}`,
+    })),
+  };
+
   return (
-    <>
-      <div className="table-responsive border-table">
-        <Table className="role-table refund-table all-package theme-table datatable-wrapper">
-          <thead>
-            <tr>
-              <th className="sm-width">
-                <Input
-                  type="checkbox"
-                  className="custom-control-input checkbox_animated"
-                  checked={
-                    tableData.length > 0 &&
-                    selectedRows.length === tableData.length
-                  }
-                  onChange={handleSelectAll}
-                />
-              </th>
-              <th className="sm-width">{t("No")}</th>
-              <th>{t("Rule Name")}</th>
-              <th>{t("Application Type")}</th>
-              <th>{t("Start Date")}</th>
-              <th>{t("End Date")}</th>
-              <th>{t("Value")}</th>
-              <th>{t("Status")}</th>
-              <th>{t("Action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.length > 0 ? (
-              tableData.map((item, index) => (
-                <tr key={item._id}>
-                  <td className="sm-width">
-                    <Input
-                      type="checkbox"
-                      className="custom-control-input checkbox_animated"
-                      checked={selectedRows.includes(item._id)}
-                      onChange={() => handleRowCheck(item._id)}
-                    />
-                  </td>
-                  <td className="sm-width">{index + 1}</td>
-                  <td>{item.rule_name}</td>
-                  <td>{item.application_type}</td>
-                  <td>{dateFormat(item.start_date)}</td>
-                  <td>{dateFormat(item.end_date)}</td>
-                  <td>
-                    {item.value}
-                    {item.discount_type === "Percentage" ? "%" : " Amt"}
-                  </td>
-                  <td>
-                    <Status data={item} url={apiRoute} />
-                  </td>
-                  <td>
-                    <div className="d-flex gap-2">
-                      <RiPencilLine
-                        className="text-info"
-                        style={{ cursor: "pointer", fontSize: "18px" }}
-                        onClick={() => {
-                          setEditingRule(item);
-                          setModal(true);
-                        }}
-                      />
-                      <RiDeleteBinLine
-                        className="text-danger"
-                        style={{ cursor: "pointer", fontSize: "18px" }}
-                        onClick={() => handleDelete(item._id)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="9" className="text-center">
-                  {t("No discount rules found")}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
-      </div>
-    </>
+    <ShowTable
+      {...props}
+      headerData={headerObj}
+      editPermission={true}
+      destroyPermission={true}
+      refetch={refetch}
+      moduleName="discounts"
+      type="discounts"
+      url={apiRoute}
+      link="discounts"
+    />
   );
 };
+
+const DiscountTableWrapped = TableWrapper(DiscountTable);
 
 const VendorDiscounts = () => {
   const { t } = useTranslation("common");
@@ -189,8 +123,7 @@ const VendorDiscounts = () => {
   const [modal, setModal] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [discountData, setDiscountData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch Categories & Products for the modal dropdowns
   const { data: categoryData } = useCustomQuery(["categories"], () =>
@@ -200,48 +133,12 @@ const VendorDiscounts = () => {
     request({ url: "/product" })
   );
 
-  // Fetch discount data
-  React.useEffect(() => {
-    fetchDiscounts();
-  }, []);
-
-  const fetchDiscounts = async () => {
-    setLoading(true);
-    try {
-      const response = await request({
-        url: apiRoute,
-        method: "get",
-        params: {
-          paginate: 15,
-          page: 1,
-          search: "",
-          sort: "asc",
-          field: "",
-        },
-      });
-
-      // The API returns { success: true, data: [...] }
-      // So we need response.data.data to get the array
-      if (Array.isArray(response?.data?.data)) {
-        setDiscountData(response.data.data);
-      } else {
-        setDiscountData([]);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      toast.error(t("Failed to fetch discounts"));
-      setDiscountData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const closeModal = () => {
     setModal(false);
     setEditingRule(null);
   };
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (values, { resetForm }) => {
     setIsSubmitting(true);
     try {
       const method = editingRule ? "put" : "post";
@@ -258,8 +155,9 @@ const VendorDiscounts = () => {
         toast.success(
           editingRule ? t("Updated successfully") : t("Created successfully")
         );
-        // Refresh discounts
-        fetchDiscounts();
+        resetForm();
+        // Trigger table refresh
+        setRefreshTrigger(prev => prev + 1);
       }
     } catch (error) {
       toast.error(error?.message || t("Something went wrong"));
@@ -271,41 +169,42 @@ const VendorDiscounts = () => {
 
   return (
     <Col sm="12">
-      <Card>
+      <Card className="card-no-border">
         <CardBody>
-          <div className="title-header option-title mb-3">
-            <h5>{t("Discounts")}</h5>
-            <Btn
-              className="align-items-center btn-theme add-button"
-              title={t("Add Rule")}
+          <div className="title-header option-title d-flex align-items-center justify-content-between mb-4">
+            <h5 className="mb-0 fw-bold">{t("Discount Rules")}</h5>
+            <button
+              type="button"
+              className="btn btn-primary d-flex align-items-center gap-2"
               onClick={() => {
                 setEditingRule(null);
                 setModal(true);
               }}
             >
-              <FiPlus />
-            </Btn>
+              <FiPlus size={18} />
+              <span>{t("Add New Rule")}</span>
+            </button>
           </div>
 
-          {loading ? (
-            <Loader />
-          ) : (
-            <DiscountTable
-              data={discountData}
-              refetch={fetchDiscounts}
-              isCheck={isCheck}
-              setIsCheck={setIsCheck}
-              setEditingRule={setEditingRule}
-              setModal={setModal}
-            />
-          )}
+          <DiscountTableWrapped
+            url={apiRoute}
+            moduleName="discounts"
+            isCheck={isCheck}
+            setIsCheck={setIsCheck}
+            setEditingRule={setEditingRule}
+            setModal={setModal}
+            onlyTitle={true}
+            key={refreshTrigger}
+          />
 
           {/* Add / Edit Modal */}
-          <Modal isOpen={modal} toggle={closeModal} centered size="lg">
-            <ModalHeader toggle={closeModal}>
-              {editingRule ? t("Edit Discount Rule") : t("Add Discount Rule")}
+          <Modal isOpen={modal} toggle={closeModal} centered size="lg" className="theme-modal">
+            <ModalHeader toggle={closeModal} className="bg-light">
+              <h5 className="modal-title fw-bold mb-0">
+                {editingRule ? t("Edit Discount Rule") : t("Add New Discount Rule")}
+              </h5>
             </ModalHeader>
-            <ModalBody>
+            <ModalBody className="p-4">
               <Formik
                 enableReinitialize
                 initialValues={{
@@ -328,25 +227,27 @@ const VendorDiscounts = () => {
               >
                 {({ values, setFieldValue }) => (
                   <Form className="theme-form">
-                    <FormGroup>
-                      <Label>{t("Rule Name")}</Label>
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold">{t("Rule Name")} <span className="text-danger">*</span></Label>
                       <Field
                         name="rule_name"
                         className="form-control"
+                        placeholder="Enter discount rule name"
                         required
                       />
                     </FormGroup>
 
-                    <FormGroup>
-                      <Label>{t("Application Type")}</Label>
-                      <div className="d-flex gap-4">
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold">{t("Application Type")} <span className="text-danger">*</span></Label>
+                      <div className="d-flex gap-4 mt-2">
                         {["All", "Category", "Product"].map((type) => (
-                          <Label key={type} check>
+                          <div key={type} className="form-check">
                             <Field
                               type="radio"
                               name="application_type"
                               value={type}
-                              className="me-2"
+                              className="form-check-input"
+                              id={`type-${type}`}
                               onChange={(e) => {
                                 setFieldValue(
                                   "application_type",
@@ -354,20 +255,22 @@ const VendorDiscounts = () => {
                                 );
                                 setFieldValue("apply_on", "");
                               }}
-                            />{" "}
-                            {t(type)}
-                          </Label>
+                            />
+                            <label className="form-check-label" htmlFor={`type-${type}`}>
+                              {t(type)}
+                            </label>
+                          </div>
                         ))}
                       </div>
                     </FormGroup>
 
                     {values.application_type === "Category" && (
-                      <FormGroup>
-                        <Label>{t("Apply on Category")}</Label>
+                      <FormGroup className="mb-3">
+                        <Label className="fw-semibold">{t("Apply on Category")} <span className="text-danger">*</span></Label>
                         <Field
                           as="select"
                           name="apply_on"
-                          className="form-control"
+                          className="form-select"
                           required
                         >
                           <option value="">{t("Select Category")}</option>
@@ -382,12 +285,12 @@ const VendorDiscounts = () => {
                     )}
 
                     {values.application_type === "Product" && (
-                      <FormGroup>
-                        <Label>{t("Apply on Product")}</Label>
+                      <FormGroup className="mb-3">
+                        <Label className="fw-semibold">{t("Apply on Product")} <span className="text-danger">*</span></Label>
                         <Field
                           as="select"
                           name="apply_on"
-                          className="form-control"
+                          className="form-select"
                           required
                         >
                           <option value="">{t("Select Product")}</option>
@@ -403,12 +306,12 @@ const VendorDiscounts = () => {
 
                     <div className="row">
                       <div className="col-md-6">
-                        <FormGroup>
-                          <Label>{t("Discount Type")}</Label>
+                        <FormGroup className="mb-3">
+                          <Label className="fw-semibold">{t("Discount Type")} <span className="text-danger">*</span></Label>
                           <Field
                             as="select"
                             name="discount_type"
-                            className="form-control"
+                            className="form-select"
                           >
                             <option value="Percentage">
                               {t("Percentage (%)")}
@@ -418,12 +321,15 @@ const VendorDiscounts = () => {
                         </FormGroup>
                       </div>
                       <div className="col-md-6">
-                        <FormGroup>
-                          <Label>{t("Value")}</Label>
+                        <FormGroup className="mb-3">
+                          <Label className="fw-semibold">{t("Value")} <span className="text-danger">*</span></Label>
                           <Field
                             name="value"
                             type="number"
                             className="form-control"
+                            placeholder="Enter discount value"
+                            min="0"
+                            step="0.01"
                             required
                           />
                         </FormGroup>
@@ -432,8 +338,8 @@ const VendorDiscounts = () => {
 
                     <div className="row">
                       <div className="col-md-6">
-                        <FormGroup>
-                          <Label>{t("Start Date")}</Label>
+                        <FormGroup className="mb-3">
+                          <Label className="fw-semibold">{t("Start Date")} <span className="text-danger">*</span></Label>
                           <Field
                             name="start_date"
                             type="datetime-local"
@@ -443,8 +349,8 @@ const VendorDiscounts = () => {
                         </FormGroup>
                       </div>
                       <div className="col-md-6">
-                        <FormGroup>
-                          <Label>{t("End Date")}</Label>
+                        <FormGroup className="mb-3">
+                          <Label className="fw-semibold">{t("End Date")} <span className="text-danger">*</span></Label>
                           <Field
                             name="end_date"
                             type="datetime-local"
@@ -455,20 +361,29 @@ const VendorDiscounts = () => {
                       </div>
                     </div>
 
-                    <div className="text-end mt-4">
+                    <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                       <Button
-                        color="secondary"
+                        type="button"
+                        color="light"
                         onClick={closeModal}
-                        className="me-2"
+                        className="px-4"
                       >
                         {t("Cancel")}
                       </Button>
-                      <Btn
+                      <button
                         type="submit"
-                        title={editingRule ? t("Update") : t("Save")}
-                        loading={Number(isSubmitting)}
-                        className="btn-primary"
-                      />
+                        className="btn btn-primary px-4"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            {editingRule ? t("Updating...") : t("Saving...")}
+                          </>
+                        ) : (
+                          editingRule ? t("Update Rule") : t("Save Rule")
+                        )}
+                      </button>
                     </div>
                   </Form>
                 )}
