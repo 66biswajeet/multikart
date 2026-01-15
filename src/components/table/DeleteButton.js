@@ -20,10 +20,13 @@ const DeleteButton = ({ id, mutate, noImage }) => {
       let apiUrl = "";
       let entityName = "";
 
-      // Check for vendor products first (must be before /product check)
+      // Check for vendor routes first (must be before general routes)
       if (currentPath.includes("/vendor/products")) {
         apiUrl = `/api/vendor/product/${id}`;
         entityName = "Product";
+      } else if (currentPath.includes("/vendor/discounts")) {
+        apiUrl = `/api/vendor/discount/${id}`;
+        entityName = "Discount";
       } else if (currentPath.includes("/product")) {
         apiUrl = `/api/product/${id}`;
         entityName = "Product";

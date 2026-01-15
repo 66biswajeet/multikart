@@ -39,9 +39,15 @@ const TableTop = (props) => {
   const [text, setText] = useState("");
   const [tc, setTc] = useState(null);
 
-  // For vendor products, always allow bulk actions
-  const allowBulkDelete = destroy || url?.includes("/vendor/product");
-  const allowBulkEdit = edit || url?.includes("/vendor/product");
+  // For vendor routes, always allow bulk actions
+  const allowBulkDelete =
+    destroy ||
+    url?.includes("/vendor/product") ||
+    url?.includes("/vendor/discount");
+  const allowBulkEdit =
+    edit ||
+    url?.includes("/vendor/product") ||
+    url?.includes("/vendor/discount");
 
   useEffect(() => {
     setInput(paginate);

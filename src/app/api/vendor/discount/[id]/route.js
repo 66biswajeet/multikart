@@ -4,6 +4,39 @@ import Discount from "@/models/Discount";
 import { requireAuth } from "@/utils/auth/serverAuth";
 
 /**
+ * GET - Fetch a specific discount by ID
+ */
+export async function GET(request, { params }) {
+  try {
+    await dbConnect();
+    const auth = await requireAuth(request);
+    if (!auth.success) return auth.errorResponse;
+
+    const { id } = await params;
+    const vendorId = auth.authData.userId;
+
+    const discount = await Discount.findOne({ _id: id, vendor: vendorId });
+
+    if (!discount) {
+      return NextResponse.json(
+        { success: false, message: "Discount not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: discount,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * PUT - Update a specific discount (e.g., Toggle status or Edit details)
  */
 export async function PUT(request, { params }) {
@@ -12,7 +45,7 @@ export async function PUT(request, { params }) {
     const auth = await requireAuth(request);
     if (!auth.success) return auth.errorResponse;
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const vendorId = auth.authData.userId;
 
@@ -52,7 +85,7 @@ export async function DELETE(request, { params }) {
     const auth = await requireAuth(request);
     if (!auth.success) return auth.errorResponse;
 
-    const { id } = params;
+    const { id } = await params;
     const vendorId = auth.authData.userId;
 
     const result = await Discount.deleteOne({ _id: id, vendor: vendorId });

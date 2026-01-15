@@ -16,14 +16,19 @@ const TableStatusOption = ({
 
   const handleStatusUpdate = async (updateIds, newStatus) => {
     try {
-      const response = await fetch(`/api${url}/bulk-status`, {
-        method: "PUT",
+      // For vendor routes, use PATCH to the main route
+      const isVendorRoute = url?.includes("/vendor/");
+      const apiUrl = isVendorRoute ? `/api${url}` : `/api${url}/bulk-status`;
+      const method = isVendorRoute ? "PATCH" : "PUT";
+
+      const response = await fetch(apiUrl, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ids: updateIds,
-          status: newStatus ? 1 : 0,
+          status: newStatus,
         }),
       });
 
