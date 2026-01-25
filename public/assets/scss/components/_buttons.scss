@@ -19,7 +19,7 @@
   }
 
   &.dark-button {
-    background: linear-gradient(93.33deg,#222221 12.35%,#2f2f2d 99.38%) !important;
+    background: linear-gradient(93.33deg, #222221 12.35%, #2f2f2d 99.38%) !important;
   }
 
   .icon {
@@ -419,6 +419,14 @@
 }
 
 .save-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+
   .btn-primary {
     background-color: var(--theme-color) !important;
     border: 1px solid var(--theme-color) !important;
@@ -445,5 +453,15 @@
   .btn-lg {
     font-size: 16px;
     padding: 10px 48px;
+  }
+
+  // Responsive adjustments
+  @media (max-width: 575px) {
+    justify-content: center;
+
+    button {
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
   }
 }
