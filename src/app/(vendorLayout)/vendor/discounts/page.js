@@ -47,8 +47,8 @@ const DiscountTable = ({
   const tableData = Array.isArray(data)
     ? data
     : Array.isArray(data?.data)
-    ? data.data
-    : [];
+      ? data.data
+      : [];
 
   // Delete handler
   const handleDelete = async (id) => {
@@ -101,9 +101,7 @@ const DiscountTable = ({
       ...item,
       id: item._id || item.id,
       // Transform value to include percentage/amount suffix
-      value: `${item.value}${
-        item.discount_type === "Percentage" ? "%" : " Amt"
-      }`,
+      value: `${item.value}${item.discount_type === "Percentage" ? "%" : " Amt"}`,
     })),
   };
 
@@ -137,8 +135,22 @@ const VendorDiscounts = () => {
     request({ url: "/category" })
   );
   const { data: productData } = useCustomQuery(["vendorProducts"], () =>
-    request({ url: "/product" })
+    request({ url: "/vendor/product" })
   );
+
+  // Extract products array from paginated structure
+  const products = React.useMemo(() => {
+    if (Array.isArray(productData?.data?.data?.data)) {
+      return productData.data.data.data;
+    }
+    if (Array.isArray(productData?.data?.data)) {
+      return productData.data.data;
+    }
+    if (Array.isArray(productData?.data)) {
+      return productData.data;
+    }
+    return [];
+  }, [productData]);
 
   const closeModal = () => {
     setModal(false);
@@ -323,12 +335,18 @@ const VendorDiscounts = () => {
                           required
                         >
                           <option value="">{t("Select Product")}</option>
-                          {Array.isArray(productData?.data?.data) &&
-                            productData.data.data.map((prod) => (
-                              <option key={prod._id} value={prod._id}>
-                                {prod.product_name}
+                          {products.length > 0 ? (
+                            products.map((prod) => (
+                              <option
+                                key={prod.id || prod._id}
+                                value={prod.id || prod._id}
+                              >
+                                {prod.name || prod.product_name}
                               </option>
-                            ))}
+                            ))
+                          ) : (
+                            <option disabled>No products available</option>
+                          )}
                         </Field>
                       </FormGroup>
                     )}

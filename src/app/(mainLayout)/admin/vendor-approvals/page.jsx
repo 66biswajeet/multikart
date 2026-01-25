@@ -42,10 +42,19 @@ export default function VendorApprovalsPage() {
           : `/store?vendor_status=${filter}`;
       const response = await request({ url, method: "GET" });
       if (response?.data?.success) {
-        setVendors(response.data.data);
+        // Handle different possible response structures
+        const vendorData = response.data.data;
+        if (Array.isArray(vendorData)) {
+          setVendors(vendorData);
+        } else if (Array.isArray(vendorData?.data)) {
+          setVendors(vendorData.data);
+        } else {
+          setVendors([]);
+        }
       }
     } catch (error) {
       toast.error("Error loading vendors");
+      setVendors([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -114,50 +123,66 @@ export default function VendorApprovalsPage() {
           </tr>
         </thead>
         <tbody>
-          {vendors.map((vendor) => (
-            <tr key={vendor._id}>
-              <td>{vendor.vendor_id}</td>
-              <td>{vendor.store_name}</td>
-              <td>{vendor.owner_user_id?.name}</td>
-              <td>{vendor.owner_user_id?.email}</td>
-              <td>{getStatusBadge(vendor.vendor_status)}</td>
-              <td>{new Date(vendor.created_at).toLocaleDateString()}</td>
-              <td>
-                <div className="d-flex gap-2">
-                  <Button
-                    size="sm"
-                    color="success"
-                    onClick={() => handleAction(vendor._id, "approve")}
-                    disabled={vendor.vendor_status === "Approved"}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    color="danger"
-                    onClick={() => handleAction(vendor._id, "reject")}
-                    disabled={vendor.vendor_status === "Rejected"}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    size="sm"
-                    color="info"
-                    onClick={() => handleAction(vendor._id, "resubmission")}
-                  >
-                    Request Resubmission
-                  </Button>
-                  <Button
-                    size="sm"
-                    color="secondary"
-                    onClick={() => router.push(`/admin/vendors/${vendor._id}`)}
-                  >
-                    View Details
-                  </Button>
-                </div>
+          {loading ? (
+            <tr>
+              <td colSpan="7" className="text-center">
+                Loading...
               </td>
             </tr>
-          ))}
+          ) : !Array.isArray(vendors) || vendors.length === 0 ? (
+            <tr>
+              <td colSpan="7" className="text-center">
+                No vendors found
+              </td>
+            </tr>
+          ) : (
+            vendors.map((vendor) => (
+              <tr key={vendor._id}>
+                <td>{vendor.vendor_id}</td>
+                <td>{vendor.store_name}</td>
+                <td>{vendor.owner_user_id?.name}</td>
+                <td>{vendor.owner_user_id?.email}</td>
+                <td>{getStatusBadge(vendor.vendor_status)}</td>
+                <td>{new Date(vendor.created_at).toLocaleDateString()}</td>
+                <td>
+                  <div className="d-flex gap-2">
+                    <Button
+                      size="sm"
+                      color="success"
+                      onClick={() => handleAction(vendor._id, "approve")}
+                      disabled={vendor.vendor_status === "Approved"}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      color="danger"
+                      onClick={() => handleAction(vendor._id, "reject")}
+                      disabled={vendor.vendor_status === "Rejected"}
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      size="sm"
+                      color="info"
+                      onClick={() => handleAction(vendor._id, "resubmission")}
+                    >
+                      Request Resubmission
+                    </Button>
+                    <Button
+                      size="sm"
+                      color="secondary"
+                      onClick={() =>
+                        router.push(`/admin/vendors/${vendor._id}`)
+                      }
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </Table>
     </div>

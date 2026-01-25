@@ -104,13 +104,46 @@ const VendorInventory = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Fetch dropdown data
+  // Fetch dropdown data - Get only vendor's products
   const { data: productData } = useCustomQuery(["vendorProducts"], () =>
-    request({ url: "/product" })
+    request({ url: "/vendor/product" })
   );
   const { data: warehouseData } = useCustomQuery(["vendorWarehouses"], () =>
-    request({ url: warehouseApi })
+    request({ url: "/vendor/warehouse" })
   );
+
+  // Extract products array from nested structure
+  const products = React.useMemo(() => {
+    // Handle paginated response structure
+    if (Array.isArray(productData?.data?.data?.data)) {
+      return productData.data.data.data;
+    }
+    if (Array.isArray(productData?.data?.data)) {
+      return productData.data.data;
+    }
+    if (Array.isArray(productData?.data)) {
+      return productData.data;
+    }
+    if (Array.isArray(productData)) {
+      return productData;
+    }
+    return [];
+  }, [productData]);
+
+  // Extract warehouses array
+  const warehouses = React.useMemo(() => {
+    // Handle both paginated and direct array responses
+    if (Array.isArray(warehouseData?.data?.data?.data)) {
+      return warehouseData.data.data.data;
+    }
+    if (Array.isArray(warehouseData?.data?.data)) {
+      return warehouseData.data.data;
+    }
+    if (Array.isArray(warehouseData?.data)) {
+      return warehouseData.data;
+    }
+    return [];
+  }, [warehouseData]);
 
   const closeModal = () => {
     setModal(false);
@@ -198,115 +231,195 @@ const VendorInventory = () => {
                 }}
                 onSubmit={handleAdjustStock}
               >
-                {({ values }) => (
-                  <Form className="theme-form">
-                    <FormGroup className="mb-3">
-                      <Label className="fw-semibold">
-                        {t("Product")} <span className="text-danger">*</span>
-                      </Label>
-                      <Field
-                        as="select"
-                        name="product_id"
-                        className="form-select"
-                        disabled={!!selectedItem}
-                        required
-                      >
-                        <option value="">{t("Select Product")}</option>
-                        {Array.isArray(productData?.data?.data) &&
-                          productData.data.data.map((prod) => (
-                            <option key={prod._id} value={prod._id}>
-                              {prod.product_name}
-                            </option>
-                          ))}
-                      </Field>
-                    </FormGroup>
+                {({ values, setFieldValue }) => {
+                  // Fetch existing stock when both product and warehouse are selected
+                  React.useEffect(() => {
+                    const fetchExistingStock = async () => {
+                      if (
+                        values.product_id &&
+                        values.warehouse_id &&
+                        !selectedItem
+                      ) {
+                        try {
+                          const response = await request({
+                            url: `/vendor/inventory/check?product_id=${values.product_id}&warehouse_id=${values.warehouse_id}`,
+                            method: "GET",
+                          });
 
-                    <FormGroup className="mb-3">
-                      <Label className="fw-semibold">
-                        {t("Warehouse")} <span className="text-danger">*</span>
-                      </Label>
-                      <Field
-                        as="select"
-                        name="warehouse_id"
-                        className="form-select"
-                        disabled={!!selectedItem}
-                        required
-                      >
-                        <option value="">{t("Select Warehouse")}</option>
-                        {Array.isArray(warehouseData?.data?.data)
-                          ? warehouseData.data.data.map((wh) => (
-                              <option key={wh._id} value={wh._id}>
-                                {wh.name}
+                          // If inventory exists, populate the fields
+                          if (response.data?.success && response.data?.data) {
+                            setFieldValue(
+                              "stock",
+                              response.data.data.stock || 0
+                            );
+                            setFieldValue(
+                              "low_stock_threshold",
+                              response.data.data.low_stock_threshold || 10
+                            );
+                            toast.info(
+                              "Existing inventory loaded. You can update the stock."
+                            );
+                          } else {
+                            // No existing inventory, try to get stock from product data
+                            const selectedProduct = products.find(
+                              (p) => (p.id || p._id) === values.product_id
+                            );
+                            if (selectedProduct?.stock) {
+                              setFieldValue("stock", selectedProduct.stock);
+                              toast.info(
+                                "Product stock loaded. Creating new inventory entry."
+                              );
+                            } else {
+                              setFieldValue("stock", 0);
+                              toast.info(
+                                "No existing inventory. Creating new stock entry."
+                              );
+                            }
+                            setFieldValue("low_stock_threshold", 10);
+                          }
+                        } catch (error) {
+                          // No existing stock found, try to get stock from product data
+                          const selectedProduct = products.find(
+                            (p) => (p.id || p._id) === values.product_id
+                          );
+                          if (selectedProduct?.stock) {
+                            setFieldValue("stock", selectedProduct.stock);
+                            setFieldValue("low_stock_threshold", 10);
+                          } else {
+                            setFieldValue("stock", 0);
+                            setFieldValue("low_stock_threshold", 10);
+                          }
+                        }
+                      }
+                    };
+
+                    fetchExistingStock();
+                  }, [values.product_id, values.warehouse_id]);
+
+                  return (
+                    <Form className="theme-form">
+                      <FormGroup className="mb-3">
+                        <Label className="fw-semibold">
+                          {t("Product")} <span className="text-danger">*</span>
+                        </Label>
+                        <Field
+                          as="select"
+                          name="product_id"
+                          className="form-select"
+                          disabled={!!selectedItem}
+                          required
+                        >
+                          <option value="">{t("Select Product")}</option>
+                          {products.length > 0 ? (
+                            products.map((prod) => (
+                              <option
+                                key={prod.id || prod._id}
+                                value={prod.id || prod._id}
+                              >
+                                {prod.name || prod.product_name}{" "}
+                                {prod.sku && `- ${prod.sku}`}
                               </option>
                             ))
-                          : Array.isArray(warehouseData?.data)
-                          ? warehouseData.data.map((wh) => (
-                              <option key={wh._id} value={wh._id}>
-                                {wh.name}
-                              </option>
-                            ))
-                          : null}
-                      </Field>
-                    </FormGroup>
-
-                    <FormGroup className="mb-3">
-                      <Label className="fw-semibold">
-                        {t("Current Stock Quantity")}{" "}
-                        <span className="text-danger">*</span>
-                      </Label>
-                      <Field
-                        name="stock"
-                        type="number"
-                        className="form-control"
-                        placeholder="Enter stock quantity"
-                        min="0"
-                        required
-                      />
-                    </FormGroup>
-
-                    <FormGroup className="mb-3">
-                      <Label className="fw-semibold">
-                        {t("Low Stock Alert Threshold")}
-                      </Label>
-                      <Field
-                        name="low_stock_threshold"
-                        type="number"
-                        className="form-control"
-                        placeholder="Enter low stock threshold"
-                        min="0"
-                      />
-                    </FormGroup>
-
-                    <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                      <Button
-                        type="button"
-                        color="light"
-                        onClick={closeModal}
-                        className="px-4"
-                      >
-                        {t("Cancel")}
-                      </Button>
-                      <button
-                        type="submit"
-                        className="btn btn-primary px-4"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <span
-                              className="spinner-border spinner-border-sm me-2"
-                              role="status"
-                              aria-hidden="true"
-                            ></span>
-                            {t("Saving...")}
-                          </>
-                        ) : (
-                          t("Save Changes")
+                          ) : (
+                            <option disabled>No products available</option>
+                          )}
+                        </Field>
+                        {products.length === 0 && (
+                          <small className="text-muted mt-1 d-block">
+                            Please list products first to manage inventory
+                          </small>
                         )}
-                      </button>
-                    </div>
-                  </Form>
-                )}
+                      </FormGroup>
+
+                      <FormGroup className="mb-3">
+                        <Label className="fw-semibold">
+                          {t("Warehouse")}{" "}
+                          <span className="text-danger">*</span>
+                        </Label>
+                        <Field
+                          as="select"
+                          name="warehouse_id"
+                          className="form-select"
+                          disabled={!!selectedItem}
+                          required
+                        >
+                          <option value="">{t("Select Warehouse")}</option>
+                          {warehouses.length > 0 ? (
+                            warehouses.map((wh) => (
+                              <option key={wh._id} value={wh._id}>
+                                {wh.name}
+                              </option>
+                            ))
+                          ) : (
+                            <option disabled>No warehouses available</option>
+                          )}
+                        </Field>
+                        {warehouses.length === 0 && (
+                          <small className="text-muted mt-1 d-block">
+                            Please create a warehouse first
+                          </small>
+                        )}
+                      </FormGroup>
+
+                      <FormGroup className="mb-3">
+                        <Label className="fw-semibold">
+                          {t("Current Stock Quantity")}{" "}
+                          <span className="text-danger">*</span>
+                        </Label>
+                        <Field
+                          name="stock"
+                          type="number"
+                          className="form-control"
+                          placeholder="Enter stock quantity"
+                          min="0"
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup className="mb-3">
+                        <Label className="fw-semibold">
+                          {t("Low Stock Alert Threshold")}
+                        </Label>
+                        <Field
+                          name="low_stock_threshold"
+                          type="number"
+                          className="form-control"
+                          placeholder="Enter low stock threshold"
+                          min="0"
+                        />
+                      </FormGroup>
+
+                      <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <Button
+                          type="button"
+                          color="light"
+                          onClick={closeModal}
+                          className="px-4"
+                        >
+                          {t("Cancel")}
+                        </Button>
+                        <button
+                          type="submit"
+                          className="btn btn-primary px-4"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <span
+                                className="spinner-border spinner-border-sm me-2"
+                                role="status"
+                                aria-hidden="true"
+                              ></span>
+                              {t("Saving...")}
+                            </>
+                          ) : (
+                            t("Save Changes")
+                          )}
+                        </button>
+                      </div>
+                    </Form>
+                  );
+                }}
               </Formik>
             </ModalBody>
           </Modal>
