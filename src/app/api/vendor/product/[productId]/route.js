@@ -3,48 +3,38 @@ import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Products";
 import mongoose from "mongoose";
 import { requireAuth } from "@/utils/auth/serverAuth";
+import { uploadToCloudinary } from "@/utils/cloudinary/cloudinaryService";
 
 // GET /api/vendor/product/[productId]
 export async function GET(request, { params }) {
   try {
-    // Connect to database
     await dbConnect();
 
-    // Check authentication
-    const authCheck = await requireAuth(request);
-    if (!authCheck.success) {
-      return authCheck.errorResponse;
-    }
-
-    const vendorId = authCheck.authData.userId;
-
-    // Get and validate productId - await params (Next.js 15+ requirement)
+    // FIX: Await params for Next.js 15 compatibility
     const { productId } = await params;
 
-    // Validate ObjectId format
+    const authCheck = await requireAuth(request);
+    if (!authCheck.success) return authCheck.errorResponse;
+    const vendorId = authCheck.authData.userId;
+
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       return NextResponse.json(
-        { success: false, message: "Invalid product ID format" },
-        { status: 400 }
+        { success: false, message: "Invalid ID" },
+        { status: 400 },
       );
     }
 
-    // Convert to ObjectId if needed
-    const objectId = new mongoose.Types.ObjectId(productId);
-
-    // Fetch product
-    const product = await Product.findById(objectId).lean();
-
+    const product = await Product.findById(productId).lean();
     if (!product) {
       return NextResponse.json(
         { success: false, message: "Product not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    // Find vendor's offering
+    // Find the specific offering for this vendor
     const myOffer = (product.linked_vendor_offerings || []).find(
-      (offer) => offer.vendor_id.toString() === vendorId.toString()
+      (offer) => offer.vendor_id.toString() === vendorId.toString(),
     );
 
     return NextResponse.json({
@@ -54,157 +44,187 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
+      { success: false, message: error.message },
+      { status: 500 },
     );
   }
 }
 
-// PATCH /api/vendor/product/[productId]
-export async function PATCH(request, { params }) {
+// PUT /api/vendor/product/[productId]
+// Handles both Update Logic AND File Uploads via FormData
+export async function PUT(request, { params }) {
+  console.log("=== VENDOR PRODUCT UPDATE ===");
   try {
-    // Connect to database
     await dbConnect();
 
-    // Check authentication
-    const authCheck = await requireAuth(request);
-    if (!authCheck.success) {
-      return authCheck.errorResponse;
-    }
-
-    const vendorId = authCheck.authData.userId;
-
-    // Get and validate productId - await params (Next.js 15+ requirement)
+    // FIX: Await params for Next.js 15 compatibility
     const { productId } = await params;
 
-    // Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
+    const authCheck = await requireAuth(request);
+    if (!authCheck.success) return authCheck.errorResponse;
+    const vendorId = authCheck.authData.userId;
+
+    // 1. Parse FormData (Fixes JSON errors with file uploads)
+    const formData = await request.formData();
+    const productDataString = formData.get("data");
+
+    if (!productDataString) {
       return NextResponse.json(
-        { success: false, message: "Invalid product ID format" },
-        { status: 400 }
+        { success: false, message: "No data provided" },
+        { status: 400 },
       );
     }
 
-    const objectId = new mongoose.Types.ObjectId(productId);
-    const data = await request.json();
+    const data = JSON.parse(productDataString);
 
-    // Build update fields
-    const updateFields = {};
-    if (data.vendor_sku !== undefined)
-      updateFields["linked_vendor_offerings.$.vendor_sku"] = data.vendor_sku;
-    if (data.base_price !== undefined)
-      updateFields["linked_vendor_offerings.$.base_price"] = data.base_price;
-    if (data.floor_price !== undefined)
-      updateFields["linked_vendor_offerings.$.floor_price"] = data.floor_price;
-    if (data.price !== undefined)
-      updateFields["linked_vendor_offerings.$.price"] = data.price;
-    if (data.condition !== undefined)
-      updateFields["linked_vendor_offerings.$.condition"] = data.condition;
-    if (data.shipping_info !== undefined)
-      updateFields["linked_vendor_offerings.$.shipping_info"] =
-        data.shipping_info;
-    if (data.warehouse_stock !== undefined)
-      updateFields["linked_vendor_offerings.$.warehouse_stock"] =
-        data.warehouse_stock;
-    if (data.selected_variants !== undefined)
-      updateFields["linked_vendor_offerings.$.selected_variants"] =
-        data.selected_variants;
-
-    // Update product
-    const updated = await Product.findOneAndUpdate(
-      { _id: objectId, "linked_vendor_offerings.vendor_id": vendorId },
-      { $set: updateFields },
-      { new: true }
-    );
-
-    if (!updated) {
+    const masterProduct = await Product.findById(productId);
+    if (!masterProduct) {
       return NextResponse.json(
-        { success: false, message: "Product or vendor offering not found" },
-        { status: 404 }
+        { success: false, message: "Product not found" },
+        { status: 404 },
       );
     }
 
-    return NextResponse.json({ success: true, message: "Product updated" });
+    // 2. Remove Old Offerings for this Vendor
+    masterProduct.linked_vendor_offerings =
+      masterProduct.linked_vendor_offerings.filter(
+        (off) => off.vendor_id.toString() !== vendorId.toString(),
+      );
+
+    // 3. Process New Offerings
+    const offeringsList = data.offerings || [data];
+
+    for (let i = 0; i < offeringsList.length; i++) {
+      const offer = offeringsList[i];
+
+      // Process Inventory
+      let warehouse_stock = [];
+      let total_stock = 0;
+      if (Array.isArray(offer.inventory_data)) {
+        warehouse_stock = offer.inventory_data.map((inv) => ({
+          warehouse_id: inv.warehouse_id,
+          stock: Number(inv.stock_quantity) || 0,
+          low_stock_threshold: Number(inv.low_stock_threshold) || 0,
+        }));
+        total_stock = warehouse_stock.reduce((a, b) => a + b.stock, 0);
+      } else {
+        total_stock = Number(offer.stock_quantity) || 0;
+      }
+
+      // Process Images
+      const media = [];
+      // Keep existing URLs
+      if (offer.media) {
+        offer.media.forEach((m) => {
+          if (m.url) media.push(m);
+        });
+      }
+
+      // Handle New File Uploads
+      if (offer.media && Array.isArray(offer.media)) {
+        for (let j = 0; j < offer.media.length; j++) {
+          const fileKey = `files_variant_${i}_${j}`;
+          const file = formData.get(fileKey);
+
+          if (file && file.size > 0) {
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            const uploadResult = await uploadToCloudinary(
+              [{ buffer, originalname: file.name }],
+              "products/variants",
+            );
+
+            media.push({
+              url: uploadResult[0].secure_url,
+              is_primary: offer.media[j].is_main,
+              type: "image",
+            });
+          }
+        }
+      }
+
+      // Create Offering Subdocument
+      masterProduct.linked_vendor_offerings.push({
+        vendor_product_id: new mongoose.Types.ObjectId(),
+        vendor_id: vendorId,
+        vendor_sku: offer.vendor_sku,
+        base_price: Number(offer.base_price),
+        floor_price: Number(offer.floor_price),
+        price: Number(offer.base_price),
+        stock_quantity: total_stock,
+        warehouse_stock: warehouse_stock,
+        condition: offer.condition || "new",
+        shipping_info: offer.shipping_info,
+        is_active: true,
+        selected_variants: offer.selected_variants || {},
+        media: media,
+      });
+    }
+
+    await masterProduct.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Product updated successfully",
+    });
   } catch (error) {
+    console.error("Update Error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
+      { success: false, message: error.message },
+      { status: 500 },
     );
   }
 }
 
-// PUT /api/vendor/product/[productId] - Alias for PATCH (same functionality)
-export async function PUT(request, { params }) {
-  return PATCH(request, { params });
+// Alias PATCH to PUT (so both methods work with FormData)
+export async function PATCH(request, { params }) {
+  return PUT(request, { params });
 }
 
-// DELETE /api/vendor/product/[productId] - Vendor can delete their own offering
+// DELETE /api/vendor/product/[productId]
 export async function DELETE(request, { params }) {
   try {
-    // Connect to database
     await dbConnect();
 
-    // Check authentication
-    const authCheck = await requireAuth(request);
-    if (!authCheck.success) {
-      return authCheck.errorResponse;
-    }
-
-    const vendorId = authCheck.authData.userId;
-
-    // Get and validate productId - await params (Next.js 15+ requirement)
+    // FIX: Await params for Next.js 15 compatibility
     const { productId } = await params;
 
-    // Validate ObjectId format
+    const authCheck = await requireAuth(request);
+    if (!authCheck.success) return authCheck.errorResponse;
+    const vendorId = authCheck.authData.userId;
+
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       return NextResponse.json(
-        { success: false, message: "Invalid product ID format" },
-        { status: 400 }
+        { success: false, message: "Invalid ID" },
+        { status: 400 },
       );
     }
 
-    const objectId = new mongoose.Types.ObjectId(productId);
-
-    // Find the product and remove vendor's offering
     const updated = await Product.findByIdAndUpdate(
-      objectId,
+      productId,
       {
         $pull: {
-          linked_vendor_offerings: {
-            vendor_id: vendorId,
-          },
+          linked_vendor_offerings: { vendor_id: vendorId },
         },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updated) {
       return NextResponse.json(
         { success: false, message: "Product not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if vendor's offering was actually removed
-    const hadOffering = updated.linked_vendor_offerings.some(
-      (offer) => offer.vendor_id.toString() === vendorId.toString()
-    );
-
-    if (hadOffering) {
-      return NextResponse.json(
-        { success: false, message: "Vendor offering not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: "Your product offering has been deleted successfully",
+      message: "Offering deleted successfully",
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
+      { success: false, message: error.message },
+      { status: 500 },
     );
   }
 }
