@@ -58,17 +58,19 @@ const VendorAddProductWizard = ({ mpid: propMpid, editId }) => {
     {
       enabled: !!(editId || mpid),
       refetchOnWindowFocus: false,
+      refetchOnMount: true, // Forces a new fetch every time component opens
+      staleTime: 0, // Marks cached data as old immediately
       select: (res) => {
         const responseBody = res?.data || res;
         if (editId) {
           return {
             product: responseBody?.product,
-            myOffer: responseBody?.myOffer,
+            myOffers: responseBody?.myOffers || [],
           };
         } else {
           return {
             product: responseBody?.data || responseBody,
-            myOffer: null,
+            myOffers: [],
           };
         }
       },
@@ -76,7 +78,7 @@ const VendorAddProductWizard = ({ mpid: propMpid, editId }) => {
   );
 
   const product = pageData?.product;
-  const existingOffer = pageData?.myOffer;
+  const existingOffers = pageData?.myOffers || [];
 
   // 2. Fetch Warehouses
   const { data: warehouseData } = useCustomQuery(
@@ -181,56 +183,38 @@ const VendorAddProductWizard = ({ mpid: propMpid, editId }) => {
 
       generatedVariants.forEach((variant) => {
         const variantKey = variant.key;
-        let matchedOffer = null; // Store specific matched offer
+        let matchedOffer = null;
 
-        // Logic to find which existing offer matches this variant row
-        if (existingOffer) {
-          // Check if existingOffer is a single object (from GET details) or array (if we expanded API)
-          // Currently GET details returns single 'myOffer' which might be just one combination or the product wrapper.
-          // *CRITICAL*: The GET API currently returns 'myOffer' as a SINGLE object.
-          // If the vendor has multiple variants saved (like your POST payload suggests),
-          // the GET API needs to return an ARRAY of offerings in 'myOffer'.
-          // Assuming 'myOffer' might be the relevant one for this specific variant if it matches.
-
-          // Let's assume 'existingOffer' is the specific offering returned by API.
-          // If the API returns multiple offerings, we need to search through them.
-          // For now, let's try to match 'existingOffer' against the current variant line.
-
-          const offerToTest = existingOffer; // In future, this might be loop: product.linked_vendor_offerings.find(...)
-
+        // --- NEW MATCHING LOGIC ---
+        if (existingOffers.length > 0) {
           if (variant.isDummy) {
-            matchedOffer = offerToTest;
-          } else if (offerToTest && offerToTest.selected_variants) {
-            const keysA = Object.keys(variant.options).sort();
-            const keysB = Object.keys(offerToTest.selected_variants).sort();
+            matchedOffer = existingOffers[0];
+          } else {
+            // Find the specific offer in the array that matches this row's options
+            matchedOffer = existingOffers.find((offer) => {
+              if (!offer.selected_variants) return false;
 
-            // Compare Keys
-            if (JSON.stringify(keysA) === JSON.stringify(keysB)) {
-              // Compare Values (Handle Array vs String mismatch)
-              const valuesMatch = keysA.every((k) => {
-                const valA = variant.options[k][0]; // "White"
-                const valB = offerToTest.selected_variants[k][0]; // "White" (or ["White"] if backend didn't flatten)
-                return valA === valB;
+              const keysA = Object.keys(variant.options).sort();
+              const keysB = Object.keys(offer.selected_variants).sort();
+
+              if (JSON.stringify(keysA) !== JSON.stringify(keysB)) return false;
+
+              // Robust check for values (handles ["White"] vs "White")
+              return keysA.every((k) => {
+                const valA = Array.isArray(variant.options[k])
+                  ? variant.options[k][0]
+                  : variant.options[k];
+                const valB = Array.isArray(offer.selected_variants[k])
+                  ? offer.selected_variants[k][0]
+                  : offer.selected_variants[k];
+                return String(valA) === String(valB);
               });
-
-              if (valuesMatch) {
-                matchedOffer = offerToTest;
-              }
-            }
+            });
           }
-
-          // BACKUP: If your GET API only returns one 'myOffer' object but it matches this row, use it.
-          // If you have multiple variants saved, you likely need to update GET API to return 'myOffers' (plural).
-          // But based on your screenshots, we are editing one specific combination?
-          // If the user selected "Edit" on the list page, did they click a specific variant or the whole product?
-          // The list page usually shows "Product" level.
-
-          // Temporary Fix for the specific screenshot case:
-          // If the API returns exactly ONE offer and it matches this row, fill it.
         }
 
         if (matchedOffer) {
-          // --- EDIT MODE: Populate Data ---
+          // --- EDIT MODE ---
           const stockMap = {};
           let totalStock = 0;
 
@@ -259,15 +243,24 @@ const VendorAddProductWizard = ({ mpid: propMpid, editId }) => {
             floor_price: matchedOffer.floor_price,
             stockData: stockMap,
             totalVendorStock: totalStock,
-            // Map dimensions/weight if available in response
+
+            // --- FIX: Map Packing Data ---
             weight: matchedOffer.shipping_weight || 0,
             length: matchedOffer.dimensions?.length || 0,
             width: matchedOffer.dimensions?.width || 0,
             height: matchedOffer.dimensions?.height || 0,
-            media: matchedOffer.media || [],
+
+            // --- FIX: Map Images (is_primary -> isMain) ---
+            media:
+              matchedOffer.media?.map((m) => ({
+                url: m.url,
+                isMain: !!m.is_primary, // Convert boolean
+                file: null,
+                id: m._id || m.id,
+              })) || [],
           };
         } else {
-          // --- CREATE MODE / NO MATCH ---
+          // --- CREATE MODE ---
           initialConfig[variantKey] = {
             isSelected: false,
             sku: "",
@@ -285,7 +278,7 @@ const VendorAddProductWizard = ({ mpid: propMpid, editId }) => {
       });
       setVendorConfig(initialConfig);
     }
-  }, [generatedVariants, existingOffer, product]);
+  }, [generatedVariants, existingOffers, product]);
 
   // --- Handlers ---
   const handleConfigChange = (key, field, value) => {

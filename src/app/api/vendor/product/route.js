@@ -199,6 +199,13 @@ export async function POST(request) {
           is_active: true,
           selected_variants: offer.selected_variants || {},
           media: media,
+
+          shipping_weight: Number(offer.shipping_weight) || 0,
+          dimensions: {
+            length: Number(offer.dimensions?.length) || 0,
+            width: Number(offer.dimensions?.width) || 0,
+            height: Number(offer.dimensions?.height) || 0,
+          },
         };
 
         masterProduct.linked_vendor_offerings.push(vendorOffering);

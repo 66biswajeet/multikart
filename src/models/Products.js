@@ -3,6 +3,24 @@ import mongoose from "mongoose";
 /**
  * Sub-schema for vendor-specific offerings linked to this master product.
  */
+const mediaSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["image", "video"],
+      default: "image",
+    },
+    url: {
+      type: String,
+      required: true,
+    },
+    is_primary: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false },
+);
 const vendorOfferingSchema = new mongoose.Schema(
   {
     vendor_product_id: {
@@ -46,6 +64,16 @@ const vendorOfferingSchema = new mongoose.Schema(
     shipping_info: {
       type: String,
     },
+    shipping_weight: {
+      type: Number,
+      default: 0,
+    },
+    dimensions: {
+      length: { type: Number, default: 0 },
+      width: { type: Number, default: 0 },
+      height: { type: Number, default: 0 },
+    },
+    media: [mediaSchema],
     is_active: {
       type: Boolean,
       default: true,
@@ -70,7 +98,7 @@ const vendorOfferingSchema = new mongoose.Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 /**
@@ -96,7 +124,7 @@ const productPolicySchema = new mongoose.Schema(
       default: null,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 /**
@@ -112,7 +140,7 @@ const attributeValueSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 /**
@@ -128,30 +156,30 @@ const variantValueSchema = new mongoose.Schema(
       type: [String],
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 /**
  * Sub-schema for standardized media assets.
  */
-const mediaSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: ["image", "video"],
-      default: "image",
-    },
-    url: {
-      type: String,
-      required: true,
-    },
-    is_primary: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { _id: false }
-);
+// const mediaSchema = new mongoose.Schema(
+//   {
+//     type: {
+//       type: String,
+//       enum: ["image", "video"],
+//       default: "image",
+//     },
+//     url: {
+//       type: String,
+//       required: true,
+//     },
+//     is_primary: {
+//       type: Boolean,
+//       default: false,
+//     },
+//   },
+//   { _id: false },
+// );
 
 /**
  * Main Master Product Schema.
@@ -269,7 +297,7 @@ const masterProductSchema = new mongoose.Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 // Virtuals

@@ -9,8 +9,6 @@ import { uploadToCloudinary } from "@/utils/cloudinary/cloudinaryService";
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-
-    // FIX: Await params for Next.js 15 compatibility
     const { productId } = await params;
 
     const authCheck = await requireAuth(request);
@@ -32,15 +30,15 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Find the specific offering for this vendor
-    const myOffer = (product.linked_vendor_offerings || []).find(
+    // Find ALL offerings for this vendor (for multi-variant support)
+    const myOffers = (product.linked_vendor_offerings || []).filter(
       (offer) => offer.vendor_id.toString() === vendorId.toString(),
     );
 
     return NextResponse.json({
       success: true,
       product,
-      myOffer: myOffer || null,
+      myOffers, // Returns array of variants
     });
   } catch (error) {
     return NextResponse.json(
@@ -51,20 +49,18 @@ export async function GET(request, { params }) {
 }
 
 // PUT /api/vendor/product/[productId]
-// Handles both Update Logic AND File Uploads via FormData
+// Handles Updates + Image Uploads + Packing Data
 export async function PUT(request, { params }) {
   console.log("=== VENDOR PRODUCT UPDATE ===");
   try {
     await dbConnect();
-
-    // FIX: Await params for Next.js 15 compatibility
     const { productId } = await params;
 
     const authCheck = await requireAuth(request);
     if (!authCheck.success) return authCheck.errorResponse;
     const vendorId = authCheck.authData.userId;
 
-    // 1. Parse FormData (Fixes JSON errors with file uploads)
+    // 1. Parse FormData
     const formData = await request.formData();
     const productDataString = formData.get("data");
 
@@ -85,7 +81,7 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // 2. Remove Old Offerings for this Vendor
+    // 2. Remove Old Offerings for this Vendor (to replace with new data)
     masterProduct.linked_vendor_offerings =
       masterProduct.linked_vendor_offerings.filter(
         (off) => off.vendor_id.toString() !== vendorId.toString(),
@@ -97,7 +93,7 @@ export async function PUT(request, { params }) {
     for (let i = 0; i < offeringsList.length; i++) {
       const offer = offeringsList[i];
 
-      // Process Inventory
+      // A. Process Inventory
       let warehouse_stock = [];
       let total_stock = 0;
       if (Array.isArray(offer.inventory_data)) {
@@ -111,16 +107,19 @@ export async function PUT(request, { params }) {
         total_stock = Number(offer.stock_quantity) || 0;
       }
 
-      // Process Images
+      // B. Process Images (The Critical Part)
       const media = [];
-      // Keep existing URLs
-      if (offer.media) {
+
+      // 1. Keep existing images (that are not blobs)
+      if (offer.media && Array.isArray(offer.media)) {
         offer.media.forEach((m) => {
-          if (m.url) media.push(m);
+          if (m.url && !m.url.startsWith("blob:")) {
+            media.push(m);
+          }
         });
       }
 
-      // Handle New File Uploads
+      // 2. Upload NEW images from FormData
       if (offer.media && Array.isArray(offer.media)) {
         for (let j = 0; j < offer.media.length; j++) {
           const fileKey = `files_variant_${i}_${j}`;
@@ -129,21 +128,24 @@ export async function PUT(request, { params }) {
           if (file && file.size > 0) {
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
+
+            // Upload to Cloudinary
             const uploadResult = await uploadToCloudinary(
               [{ buffer, originalname: file.name }],
               "products/variants",
             );
 
+            // Add new image to media array
             media.push({
               url: uploadResult[0].secure_url,
-              is_primary: offer.media[j].is_main,
+              is_primary: offer.media[j].is_main, // Map 'is_main' from frontend to 'is_primary'
               type: "image",
             });
           }
         }
       }
 
-      // Create Offering Subdocument
+      // C. Create Offering Subdocument (With ALL fields)
       masterProduct.linked_vendor_offerings.push({
         vendor_product_id: new mongoose.Types.ObjectId(),
         vendor_id: vendorId,
@@ -157,7 +159,17 @@ export async function PUT(request, { params }) {
         shipping_info: offer.shipping_info,
         is_active: true,
         selected_variants: offer.selected_variants || {},
+
+        // --- IMPORTANT: Save Media ---
         media: media,
+
+        // --- IMPORTANT: Save Packing Data ---
+        shipping_weight: Number(offer.shipping_weight) || 0,
+        dimensions: {
+          length: Number(offer.dimensions?.length) || 0,
+          width: Number(offer.dimensions?.width) || 0,
+          height: Number(offer.dimensions?.height) || 0,
+        },
       });
     }
 
@@ -176,7 +188,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-// Alias PATCH to PUT (so both methods work with FormData)
+// Alias PATCH to PUT
 export async function PATCH(request, { params }) {
   return PUT(request, { params });
 }
@@ -185,8 +197,6 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();
-
-    // FIX: Await params for Next.js 15 compatibility
     const { productId } = await params;
 
     const authCheck = await requireAuth(request);
