@@ -43,11 +43,13 @@ const TableTop = (props) => {
   const allowBulkDelete =
     destroy ||
     url?.includes("/vendor/product") ||
-    url?.includes("/vendor/discount");
+    url?.includes("/vendor/discount") ||
+    url?.includes("/vendor/inventory");
   const allowBulkEdit =
     edit ||
     url?.includes("/vendor/product") ||
-    url?.includes("/vendor/discount");
+    url?.includes("/vendor/discount") ||
+    url?.includes("/vendor/inventory");
 
   useEffect(() => {
     setInput(paginate);

@@ -3,10 +3,12 @@ import dbConnect from "@/lib/dbConnect";
 import Warehouse from "@/models/Warehouse";
 import { requireAdmin } from "@/utils/auth/serverAuth";
 
-// GET - Fetch a single fulfillment center
+// GET - Admin: Fetch a single fulfillment center
 export async function GET(request, { params }) {
   try {
     await dbConnect();
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.success) return authCheck.errorResponse;
 
     // --- FIX FOR NEXT.JS 15 ---
     const { id } = await params;
@@ -18,6 +20,7 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
+
     return NextResponse.json({ success: true, data: center });
   } catch (error) {
     return NextResponse.json(
@@ -27,7 +30,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// PUT - Update a single fulfillment center
+// PUT - Admin: Update a single fulfillment center
 export async function PUT(request, { params }) {
   try {
     await dbConnect();
@@ -60,7 +63,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE - Remove a single fulfillment center
+// DELETE - Admin: Remove a single fulfillment center
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();

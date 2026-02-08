@@ -58,7 +58,7 @@ const VendorRequestForm = () => {
           url: Category,
           params: { status: 1, type: "product", is_leaf: true, limit: 10000 },
         },
-        router
+        router,
       ),
     {
       refetchOnWindowFocus: false,
@@ -67,7 +67,7 @@ const VendorRequestForm = () => {
           id: item._id,
           name: item.path ? item.path.join(" > ") : item.name,
         })),
-    }
+    },
   );
 
   const { data: brandData } = useCustomQuery(
@@ -77,7 +77,7 @@ const VendorRequestForm = () => {
       refetchOnWindowFocus: false,
       select: (data) =>
         data.data.data.map((item) => ({ id: item.id, name: item.name })),
-    }
+    },
   );
 
   // 2. Validation Schema
@@ -146,19 +146,19 @@ const VendorRequestForm = () => {
               method: "POST",
               data: formData,
             },
-            router
+            router,
           );
 
           ToastNotification(
             "success",
-            "Product request submitted! Waiting for approval."
+            "Product request submitted! Waiting for approval.",
           );
           router.push("/vendor/products");
         } catch (error) {
           console.error(error);
           ToastNotification(
             "error",
-            error.response?.data?.message || "Submission failed"
+            error.response?.data?.message || "Submission failed",
           );
         } finally {
           setSubmitting(false);
@@ -305,9 +305,15 @@ const VendorRequestForm = () => {
                         />
                       </TabPane>
                     </TabContent>
+                  </Col>
 
-                    {/* Form Actions */}
-                    <div className="ms-auto justify-content-end dflex-wgap mt-sm-4 mt-2 save-back-button">
+                  {/* Form Actions - Full width after sidebar */}
+                  <Col
+                    xl={{ size: 7, offset: 3 }}
+                    lg={{ size: 8, offset: 4 }}
+                    className="mt-4"
+                  >
+                    <div className="save-back-button">
                       <Btn
                         className="btn-outline"
                         title="Back"

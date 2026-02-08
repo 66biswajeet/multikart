@@ -44,14 +44,14 @@ const ProductForm = ({
           url: `${product}/${updateId}`,
           headers: { "Cache-Control": "no-cache" }, // Force fresh data from server
         },
-        router
+        router,
       ),
     {
       enabled: !!updateId,
       staleTime: 5000, // Data is considered "fresh" for 5 seconds
       cacheTime: 0, // Still ensure we don't use old data on re-entry
       select: (data) => data?.data?.data,
-    }
+    },
   );
 
   // useEffect(() => {
@@ -195,27 +195,35 @@ const ProductForm = ({
                     updateId={updateId}
                     setActiveTab={setActiveTab}
                   />
-                  <div className="ms-auto justify-content-end dflex-wgap mt-sm-4 mt-2 save-back-button">
-                    <Btn
-                      className="btn-outline"
-                      title="Back"
-                      onClick={() => router.back()}
-                    />
-                    {updateId && (
+
+                  {/* Form Actions - Full width after sidebar */}
+                  <Col
+                    xl={{ size: 7, offset: 3 }}
+                    lg={{ size: 8, offset: 4 }}
+                    className="mt-4"
+                  >
+                    <div className="save-back-button">
                       <Btn
                         className="btn-outline"
-                        type="submit"
-                        title="save&Continue"
-                        onClick={() => setSaveButton(true)}
+                        title="Back"
+                        onClick={() => router.back()}
                       />
-                    )}
-                    <Btn
-                      className="btn-primary"
-                      type="submit"
-                      title={buttonName}
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                      {updateId && (
+                        <Btn
+                          className="btn-outline"
+                          type="submit"
+                          title="save&Continue"
+                          onClick={() => setSaveButton(true)}
+                        />
+                      )}
+                      <Btn
+                        className="btn-primary"
+                        type="submit"
+                        title={buttonName}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </Col>
                 </Row>
               </Card>
             </Col>

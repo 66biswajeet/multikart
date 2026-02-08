@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Products";
+import Discount from "@/models/Discount";
+// FIX: Import Category so Mongoose registers the schema before population
 import Category from "@/models/Category";
 import mongoose from "mongoose";
 import { requireAuth } from "@/utils/auth/serverAuth";
 import { uploadToCloudinary } from "@/utils/cloudinary/cloudinaryService";
+import { applyDiscountsToProducts } from "@/utils/discountCalculator";
 
 /**
  * GET /api/vendor/product
@@ -22,32 +25,43 @@ export async function GET(request) {
 
     const vendorId = authCheck.authData.userId;
 
-    // 2. Find Master Products
+    // 2. Find Master Products linked to this vendor
+    // The 'Category' import above ensures .populate() works correctly now
     const products = await Product.find({
       "linked_vendor_offerings.vendor_id": vendorId,
     })
       .populate("category_id", "name")
       .select(
-        "product_name slug product_thumbnail linked_vendor_offerings status createdAt base_price floor_price promo_price sku"
+        "product_name slug product_thumbnail linked_vendor_offerings status createdAt base_price floor_price promo_price sku",
       )
       .lean();
 
-    // 3. Transform data
+    // 3. Get active discounts for this vendor
+    const discounts = await Discount.find({
+      vendor: vendorId,
+      status: true,
+      start_date: { $lte: new Date() },
+      end_date: { $gte: new Date() },
+    }).lean();
+
+    // 4. Transform data for the Table
     const vendorProducts = products.map((p) => {
+      // Find the offering specific to this vendor
       const myOffer = p.linked_vendor_offerings.find(
-        (offer) => offer.vendor_id.toString() === vendorId.toString()
+        (offer) => offer.vendor_id.toString() === vendorId.toString(),
       );
-      console.log("DEBUG myOffer for product", p._id, myOffer);
+
       return {
         id: p._id,
+        _id: p._id,
         name: p.product_name,
         slug: p.slug,
         image: p.product_thumbnail,
         category: p.category_id?.name || "N/A",
+        category_id: p.category_id,
         sku: myOffer?.vendor_sku || p.sku || "N/A",
         base_price: myOffer?.base_price ?? 0,
         floor_price: myOffer?.floor_price ?? 0,
-        promo_price: p.promo_price || 0,
         price: myOffer?.price || 0,
         stock: myOffer?.stock_quantity || 0,
         status: myOffer?.is_active ? 1 : 0,
@@ -55,14 +69,20 @@ export async function GET(request) {
       };
     });
 
-    // --- FIX: Return data in Pagination format for the Table ---
+    // 5. Apply discounts
+    const productsWithDiscounts = applyDiscountsToProducts(
+      vendorProducts,
+      discounts,
+    );
+
     return NextResponse.json({
       success: true,
       data: {
-        data: vendorProducts,
-        total: vendorProducts.length,
+        data: productsWithDiscounts,
+        total: productsWithDiscounts.length,
         current_page: 1,
-        per_page: vendorProducts.length > 0 ? vendorProducts.length : 10,
+        per_page:
+          productsWithDiscounts.length > 0 ? productsWithDiscounts.length : 10,
         last_page: 1,
       },
     });
@@ -70,14 +90,14 @@ export async function GET(request) {
     console.error("Vendor Product GET Error:", error);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 /**
  * POST /api/vendor/product
- * 1. Link to existing Master Product ("Sell This Product")
+ * 1. Link to existing Master Product (Handles Multiple Variants/Offerings)
  * 2. OR Submit new product for approval
  */
 export async function POST(request) {
@@ -89,76 +109,122 @@ export async function POST(request) {
     if (!authCheck.success) {
       return authCheck.errorResponse;
     }
+    const vendorId = authCheck.authData.userId;
 
+    // 1. Parse FormData
     const formData = await request.formData();
     const productDataString = formData.get("data");
     const productData = productDataString ? JSON.parse(productDataString) : {};
 
+    // =========================================================
     // SCENARIO 1: Link to Existing Master Product
+    // =========================================================
     if (productData.master_product_id) {
-      console.log(
-        "🔗 Linking vendor to existing Master Product:",
-        productData.master_product_id
-      );
-
-      // Create the offering object
-      // Support new warehouse_stock array from frontend
-      let stock_quantity = 0;
-      let warehouse_stock = [];
-      if (
-        Array.isArray(productData.warehouse_stock) &&
-        productData.warehouse_stock.length > 0
-      ) {
-        warehouse_stock = productData.warehouse_stock.map((ws) => ({
-          warehouse_id: ws.warehouse_id,
-          stock: Number(ws.stock) || 0,
-        }));
-        stock_quantity = warehouse_stock.reduce((sum, ws) => sum + ws.stock, 0);
-      } else {
-        stock_quantity = Number(productData.stock_quantity) || 0;
-      }
-
-      const vendorOffering = {
-        vendor_product_id: new mongoose.Types.ObjectId(),
-        vendor_id: authCheck.authData.userId,
-        vendor_sku: productData.vendor_sku || "",
-        base_price: Number(productData.base_price) || 0,
-        floor_price: Number(productData.floor_price) || 0,
-        price: Number(productData.price),
-        stock_quantity,
-        warehouse_stock,
-        condition: productData.condition || "new",
-        shipping_info: productData.shipping_info,
-        is_active: true,
-      };
-
-      // Find master product and push the new offering
-      const updatedProduct = await Product.findByIdAndUpdate(
+      const masterProduct = await Product.findById(
         productData.master_product_id,
-        {
-          $push: { linked_vendor_offerings: vendorOffering },
-        },
-        { new: true }
       );
-
-      if (!updatedProduct) {
+      if (!masterProduct) {
         return NextResponse.json(
           { success: false, message: "Master Product not found." },
-          { status: 404 }
+          { status: 404 },
         );
       }
+
+      // Handle both single object and array of offerings
+      const offeringsList =
+        productData.offerings && Array.isArray(productData.offerings)
+          ? productData.offerings
+          : [productData];
+
+      // Loop through offerings (variants)
+      for (let i = 0; i < offeringsList.length; i++) {
+        const offer = offeringsList[i];
+
+        // A. Process Inventory (Wizard sends 'inventory_data')
+        let warehouse_stock = [];
+        let total_stock = 0;
+
+        if (Array.isArray(offer.inventory_data)) {
+          warehouse_stock = offer.inventory_data.map((inv) => ({
+            warehouse_id: inv.warehouse_id,
+            stock: Number(inv.stock_quantity) || 0,
+            low_stock_threshold: Number(inv.low_stock_threshold) || 0,
+          }));
+          total_stock = warehouse_stock.reduce(
+            (acc, curr) => acc + curr.stock,
+            0,
+          );
+        } else {
+          // Fallback if stock_quantity is sent directly
+          total_stock = Number(offer.stock_quantity) || 0;
+        }
+
+        // B. Process Images for this Variant
+        // We look for keys 'files_variant_0_0', 'files_variant_0_1' etc in FormData
+        const media = [];
+        if (offer.media && Array.isArray(offer.media)) {
+          for (let j = 0; j < offer.media.length; j++) {
+            const fileKey = `files_variant_${i}_${j}`;
+            const file = formData.get(fileKey);
+
+            if (file && file.size > 0) {
+              const bytes = await file.arrayBuffer();
+              const buffer = Buffer.from(bytes);
+              const uploadResult = await uploadToCloudinary(
+                [{ buffer, originalname: file.name }],
+                "products/variants",
+              );
+
+              media.push({
+                url: uploadResult[0].secure_url,
+                is_primary: offer.media[j].is_main,
+                type: "image",
+              });
+            }
+          }
+        }
+
+        // C. Create Offering Subdocument
+        const vendorOffering = {
+          vendor_product_id: new mongoose.Types.ObjectId(),
+          vendor_id: vendorId,
+          vendor_sku: offer.vendor_sku || "",
+          base_price: Number(offer.base_price) || 0,
+          floor_price: Number(offer.floor_price) || 0,
+          price: Number(offer.base_price) || 0, // Default selling price
+          stock_quantity: total_stock,
+          warehouse_stock: warehouse_stock,
+          condition: offer.condition || "new",
+          shipping_info: offer.shipping_info,
+          is_active: true,
+          selected_variants: offer.selected_variants || {},
+          media: media,
+
+          shipping_weight: Number(offer.shipping_weight) || 0,
+          dimensions: {
+            length: Number(offer.dimensions?.length) || 0,
+            width: Number(offer.dimensions?.width) || 0,
+            height: Number(offer.dimensions?.height) || 0,
+          },
+        };
+
+        masterProduct.linked_vendor_offerings.push(vendorOffering);
+      }
+
+      await masterProduct.save();
 
       return NextResponse.json(
         {
           success: true,
-          message: "Product listed successfully.",
-          data: updatedProduct,
+          message: `${offeringsList.length} product variant(s) listed successfully.`,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
+    // =========================================================
     // SCENARIO 2: Request New Product (Fallback for full submission)
+    // =========================================================
     const {
       product_name,
       category_id,
@@ -173,7 +239,7 @@ export async function POST(request) {
     if (!product_name || !category_id) {
       return NextResponse.json(
         { success: false, message: "Product Name and Category are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -183,7 +249,7 @@ export async function POST(request) {
     if (lastProduct && lastProduct.master_product_code) {
       try {
         const lastIdNum = parseInt(
-          lastProduct.master_product_code.split("UPID-")[1]
+          lastProduct.master_product_code.split("UPID-")[1],
         );
         if (!isNaN(lastIdNum)) nextId = lastIdNum + 1;
         else nextId = (await Product.countDocuments()) + 1;
@@ -201,17 +267,15 @@ export async function POST(request) {
     const existingSlug = await Product.findOne({ slug });
     if (existingSlug) slug = `${slug}-${Date.now()}`;
 
-    // Handle Files - Upload directly with buffer (Vercel compatible)
+    // Handle Media (Thumbnail)
     const media = [];
     const product_thumbnail_file = formData.get("product_thumbnail");
-
     if (product_thumbnail_file && product_thumbnail_file.size > 0) {
       const bytes = await product_thumbnail_file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-
       const uploadResult = await uploadToCloudinary(
         [{ buffer, originalname: product_thumbnail_file.name }],
-        "products"
+        "products",
       );
       media.push({
         url: uploadResult[0].secure_url,
@@ -220,10 +284,19 @@ export async function POST(request) {
       });
     }
 
-    // Create Vendor Offering
+    // Sanitize Policies (Fixes BSON Error)
+    const sanitizedPolicies = product_policies ? { ...product_policies } : {};
+    if (sanitizedPolicies.return_policy === "")
+      sanitizedPolicies.return_policy = null;
+    if (sanitizedPolicies.refund_policy === "")
+      sanitizedPolicies.refund_policy = null;
+    if (sanitizedPolicies.warranty_info === "")
+      sanitizedPolicies.warranty_info = null;
+
+    // Create Initial Offering
     const vendorOffering = {
       vendor_product_id: new mongoose.Types.ObjectId(),
-      vendor_id: authCheck.authData.userId,
+      vendor_id: vendorId,
       vendor_sku: productData.vendor_sku || "",
       base_price: Number(productData.base_price) || 0,
       floor_price: Number(productData.floor_price) || 0,
@@ -232,21 +305,20 @@ export async function POST(request) {
       is_active: true,
     };
 
-    // Save New Product (Inactive/Pending)
     const newProduct = new Product({
       master_product_code,
       product_name,
       slug,
       category_id,
       brand_id: brand_id || null,
-      status: "inactive", // Forces Admin Approval
-      product_policies: product_policies || {},
+      status: "inactive",
+      product_policies: sanitizedPolicies,
       attribute_values: attribute_values || [],
       variant_values: variant_values || [],
       media: media,
       linked_vendor_offerings: [vendorOffering],
-      created_by: authCheck.authData.userId,
-      updated_by: authCheck.authData.userId,
+      created_by: vendorId,
+      updated_by: vendorId,
     });
 
     await newProduct.save();
@@ -257,7 +329,7 @@ export async function POST(request) {
         message: "Product submitted successfully. Waiting for Admin approval.",
         data: newProduct,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("❌ Vendor Product Submit Error:", error);
@@ -267,7 +339,7 @@ export async function POST(request) {
         message: "Failed to submit product",
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -291,7 +363,7 @@ export async function DELETE(request) {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json(
         { success: false, message: "Product IDs are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -303,7 +375,7 @@ export async function DELETE(request) {
       },
       {
         $pull: { linked_vendor_offerings: { vendor_id: vendorId } },
-      }
+      },
     );
 
     return NextResponse.json({
@@ -314,7 +386,7 @@ export async function DELETE(request) {
     console.error("❌ Vendor Product DELETE Error:", error);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
