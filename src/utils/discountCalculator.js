@@ -63,9 +63,8 @@ export function calculatePromotionalPrice(product, discounts) {
     const basePrice = Number(product.base_price) || Number(product.price) || 0;
     const promoPrice = basePrice - maxDiscountAmount;
 
-    // Ensure promotional price doesn't go below floor price
-    const floorPrice = Number(product.floor_price) || 0;
-    return Math.max(promoPrice, floorPrice);
+    // Ensure promotional price doesn't go below 0
+    return Math.max(promoPrice, 0);
   }
 
   return 0;

@@ -37,7 +37,7 @@ export default function VendorProfilePage() {
       setIsLoading(true);
       const response = await request(
         { url: "/vendor/profile", method: "GET" },
-        router
+        router,
       );
       if (response.data?.success) {
         setVendorData(response.data.data);
@@ -58,7 +58,7 @@ export default function VendorProfilePage() {
           method: "PUT",
           data: values, // Send the form values directly
         },
-        router
+        router,
       );
 
       if (response.data?.success) {
@@ -103,7 +103,7 @@ export default function VendorProfilePage() {
                     className={classnames({ active: activeTab === "3" })}
                     onClick={() => setActiveTab("3")}
                   >
-                    Warehouses & Channels
+                    Channels
                   </NavLink>
                 </NavItem>
               </Nav>
