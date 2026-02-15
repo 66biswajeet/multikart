@@ -28,14 +28,14 @@ const Header = ({ setMode, mode, setLtr, settingData }) => {
                 src={state?.setDarkLogo?.original_url}
                 height={21}
                 width={120}
-                alt="Dark Logo"
+                alt="Logo"
               />
             ) : (
               <Image
                 src="/assets/images/settings/logo-white.png"
                 height={50}
                 width={120}
-                alt="InfoTech Logo"
+                alt="Logo"
               />
             )}
           </a>

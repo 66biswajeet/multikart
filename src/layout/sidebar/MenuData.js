@@ -209,9 +209,22 @@ const MENUITEMS = [
     title: "Settings",
     displayTitle: "Settings",
     icon: <RiSettings3Line />,
-    path: "/setting",
+    type: "sub",
     permission: ["setting.index"],
-    type: "link",
+    children: [
+      {
+        title: "SiteSettings",
+        path: "/setting",
+        displayTitle: "Site Settings",
+        permission: ["setting.index"],
+      },
+      {
+        title: "StoreCustomization",
+        path: "/store-customization",
+        displayTitle: "Store Customization",
+        permission: ["setting.index"],
+      },
+    ],
   },
 ];
 

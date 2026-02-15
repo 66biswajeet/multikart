@@ -21,6 +21,7 @@ const FileUploadField = ({
   loading,
   showImage,
   paramsProps,
+  skipValidation,
   ...props
 }) => {
   const storeImageObject = props.name.split("_id")[0];
@@ -35,10 +36,10 @@ const FileUploadField = ({
       multiple
         ? setSelectedImage(values[storeImageObject])
         : values[storeImageObject]
-        ? setSelectedImage(loading ? null : [values[storeImageObject]])
-        : values[props.name]
-        ? setSelectedImage([values[props.name]])
-        : setSelectedImage([]);
+          ? setSelectedImage(loading ? null : [values[storeImageObject]])
+          : values[props.name]
+            ? setSelectedImage([values[props.name]])
+            : setSelectedImage([]);
     }
   }, [values[storeImageObject], loading]);
 
@@ -66,7 +67,7 @@ const FileUploadField = ({
               url: `/attachment/${attachmentId}`,
               method: "DELETE",
             },
-            router
+            router,
           );
           if (response?.data?.success) {
             ToastNotification("success", "Image deleted successfully");
@@ -75,13 +76,13 @@ const FileUploadField = ({
 
         if (multiple) {
           let updatedImage = selectedImage.filter(
-            (elem) => (elem.id || elem._id) !== (result.id || result._id)
+            (elem) => (elem.id || elem._id) !== (result.id || result._id),
           );
           setSelectedImage(updatedImage);
           setFieldValue(storeImageObject, updatedImage);
           setFieldValue(
             props?.name,
-            updatedImage.map((img) => img.id || img._id)
+            updatedImage.map((img) => img.id || img._id),
           );
         } else {
           setFieldValue(props?.name, null);
@@ -98,8 +99,8 @@ const FileUploadField = ({
   };
 
   const getMimeTypeImage = (result) => {
-    return mimeImageMapping[result?.mime_type] ??
-      result?.original_url?.split("/")[1] == "storage"
+    return (mimeImageMapping[result?.mime_type] ??
+      result?.original_url?.split("/")[1] == "storage")
       ? result?.original_url
       : result?.original_url;
   };
@@ -184,42 +185,46 @@ const FileUploadField = ({
           redirectToTabs={true}
           uploadOnly={true}
           // --- VALIDATION RULES SENT TO MODAL ---
-          validateImage={(file) => {
-            return new Promise((resolve, reject) => {
-              const img = document.createElement("img");
-              img.src = URL.createObjectURL(file);
-              img.onload = () => {
-                const width = img.width;
-                const height = img.height;
+          validateImage={
+            skipValidation
+              ? null
+              : (file) => {
+                  return new Promise((resolve, reject) => {
+                    const img = document.createElement("img");
+                    img.src = URL.createObjectURL(file);
+                    img.onload = () => {
+                      const width = img.width;
+                      const height = img.height;
 
-                // 1. Check 1:1 Aspect Ratio
-                if (width !== height) {
-                  ToastNotification(
-                    "error",
-                    `Image must be a square (1:1 ratio). Your image is ${width}x${height}px.`
-                  );
-                  resolve(false);
-                  return;
+                      // 1. Check 1:1 Aspect Ratio
+                      if (width !== height) {
+                        ToastNotification(
+                          "error",
+                          `Image must be a square (1:1 ratio). Your image is ${width}x${height}px.`,
+                        );
+                        resolve(false);
+                        return;
+                      }
+
+                      // 2. Check Resolution Range (1000px - 2000px)
+                      if (width < 1000 || width > 2000) {
+                        ToastNotification(
+                          "error",
+                          `Resolution must be between 1000x1000px and 2000x2000px. Your image is ${width}x${height}px.`,
+                        );
+                        resolve(false);
+                        return;
+                      }
+
+                      resolve(true); // Valid
+                    };
+                    img.onerror = () => {
+                      ToastNotification("error", "Invalid image file.");
+                      resolve(false);
+                    };
+                  });
                 }
-
-                // 2. Check Resolution Range (1000px - 2000px)
-                if (width < 1000 || width > 2000) {
-                  ToastNotification(
-                    "error",
-                    `Resolution must be between 1000x1000px and 2000x2000px. Your image is ${width}x${height}px.`
-                  );
-                  resolve(false);
-                  return;
-                }
-
-                resolve(true); // Valid
-              };
-              img.onerror = () => {
-                ToastNotification("error", "Invalid image file.");
-                resolve(false);
-              };
-            });
-          }}
+          }
           // --------------------------------------
         />
       </ul>

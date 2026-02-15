@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { HexColorPicker } from "react-colorful";
 
 // Inline styles for color picker (replaces CSS import)
 const colorPickerStyles = `
