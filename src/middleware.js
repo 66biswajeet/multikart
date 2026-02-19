@@ -3,33 +3,62 @@ import jwt from "jsonwebtoken";
 
 export const runtime = "nodejs";
 
+// CORS headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Max-Age": "86400",
+};
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  // Handle CORS preflight requests
+  if (request.method === "OPTIONS") {
+    return new NextResponse(null, { headers: corsHeaders });
+  }
 
   console.log("Middleware executing for path:", pathname);
 
   // Skip authentication for auth routes
   if (pathname.startsWith("/auth/") || pathname === "/auth") {
     console.log("Skipping auth for auth route:", pathname);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   // Skip authentication for API auth routes
   if (pathname.startsWith("/api/auth/")) {
     console.log("Skipping auth for API auth route:", pathname);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   // Skip authentication for public product API (GET requests only for client site)
   if (pathname === "/api/product" && request.method === "GET") {
     console.log("Skipping auth for public product listing (GET):", pathname);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   // Skip authentication for public category API (GET requests only for client site)
   if (pathname === "/api/category" && request.method === "GET") {
     console.log("Skipping auth for public category listing (GET):", pathname);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   // Skip authentication for static files
@@ -38,7 +67,11 @@ export async function middleware(request) {
     pathname.startsWith("/assets/") ||
     pathname.includes(".")
   ) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   try {
@@ -54,10 +87,14 @@ export async function middleware(request) {
       console.log("No token found, redirecting to login");
       // Redirect to login for protected routes
       if (pathname.startsWith("/api/")) {
-        return NextResponse.json(
+        const errorResponse = NextResponse.json(
           { success: false, message: "Access denied. No token provided." },
           { status: 401 }
         );
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          errorResponse.headers.set(key, value);
+        });
+        return errorResponse;
       }
       return NextResponse.redirect(new URL("/auth/login", request.url));
     }
@@ -117,19 +154,28 @@ export async function middleware(request) {
       },
     });
 
+    // Add CORS headers to response
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
     // Check admin access for user management routes
     if (pathname.startsWith("/user") || pathname.startsWith("/api/user")) {
       console.log("Checking admin access for user management route");
       if (!isUserAdmin) {
         console.log("Access denied - user is not admin");
         if (pathname.startsWith("/api/")) {
-          return NextResponse.json(
+          const errorResponse = NextResponse.json(
             {
               success: false,
               message: "Access denied. Admin privileges required.",
             },
             { status: 403 }
           );
+          Object.entries(corsHeaders).forEach(([key, value]) => {
+            errorResponse.headers.set(key, value);
+          });
+          return errorResponse;
         }
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
@@ -146,10 +192,14 @@ export async function middleware(request) {
     );
 
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { success: false, message: "Invalid token." },
         { status: 401 }
       );
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        errorResponse.headers.set(key, value);
+      });
+      return errorResponse;
     }
 
     // Redirect to login for invalid token
