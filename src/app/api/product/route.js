@@ -54,6 +54,7 @@ export async function GET(request) {
     const searchParams = request?.nextUrl?.searchParams;
     const querySearch = searchParams.get("search");
     const queryCategory = searchParams.get("category_id"); // Single category filter
+    const queryCategorySlug = searchParams.get("category_slug"); // Category slug filter
     const queryCategoryIds = searchParams.get("category_ids"); // Multiple categories filter
     const queryBrandIds = searchParams.get("brand_ids"); // Brand filter support
     const queryExport = searchParams.get("export"); // Get Export Flag
@@ -65,6 +66,7 @@ export async function GET(request) {
     console.log("🔍 Product API GET - Query params:", {
       querySearch,
       queryCategory,
+      queryCategorySlug,
       queryCategoryIds,
       queryBrandIds,
       queryPage,
@@ -82,7 +84,30 @@ export async function GET(request) {
     }
 
     // 2. Filter by Category (Single or Multiple) - HIERARCHICAL SUPPORT
-    if (queryCategory) {
+    if (queryCategorySlug) {
+      // Convert category slug to category ID first
+      try {
+        const category = await Category.findOne({
+          slug: new RegExp(queryCategorySlug, "i"),
+        })
+          .select("_id")
+          .lean();
+
+        if (category) {
+          const categoryId = category._id;
+          // Find all child categories recursively
+          const allCategoryIds = await findAllChildCategories(categoryId);
+          // Include the parent category itself plus all children
+          query.category_id = { $in: allCategoryIds };
+        }
+      } catch (e) {
+        console.error(
+          "❌ Error finding category by slug:",
+          queryCategorySlug,
+          e,
+        );
+      }
+    } else if (queryCategory) {
       // Convert single category ID to ObjectId
       try {
         const categoryId = new mongoose.Types.ObjectId(queryCategory);
@@ -101,7 +126,7 @@ export async function GET(request) {
       if (categoryIdArray.length > 0) {
         try {
           const categoryObjectIds = categoryIdArray.map(
-            (id) => new mongoose.Types.ObjectId(id.trim())
+            (id) => new mongoose.Types.ObjectId(id.trim()),
           );
 
           // Find all child categories for each selected category
@@ -130,7 +155,7 @@ export async function GET(request) {
         try {
           query.brand_id = {
             $in: brandIdArray.map(
-              (id) => new mongoose.Types.ObjectId(id.trim())
+              (id) => new mongoose.Types.ObjectId(id.trim()),
             ),
           };
         } catch (e) {
@@ -142,7 +167,7 @@ export async function GET(request) {
     // Debug: Log the final query
     console.log(
       "🔍 Product API - Final MongoDB query:",
-      JSON.stringify(query, null, 2)
+      JSON.stringify(query, null, 2),
     );
 
     // Default sort: newest first
@@ -203,7 +228,7 @@ export async function GET(request) {
         message: "Failed to fetch master products",
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
 
     // Add CORS headers to error response too
@@ -223,11 +248,11 @@ export async function OPTIONS(request) {
   response.headers.set("Access-Control-Allow-Origin", "*");
   response.headers.set(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
+    "GET, POST, PUT, DELETE, OPTIONS",
   );
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
+    "Content-Type, Authorization",
   );
   return response;
 }
@@ -279,7 +304,7 @@ export async function POST(request) {
     if (!product_name || !category_id) {
       return NextResponse.json(
         { success: false, message: "Product Name and Category are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -287,7 +312,7 @@ export async function POST(request) {
     if (!category) {
       return NextResponse.json(
         { success: false, message: "Category not found." },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (!category.is_leaf) {
@@ -296,7 +321,7 @@ export async function POST(request) {
           success: false,
           message: "Products can only be assigned to leaf categories.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -322,7 +347,7 @@ export async function POST(request) {
             success: false,
             message: `Mandatory attribute for this category is missing.`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -336,7 +361,7 @@ export async function POST(request) {
             success: false,
             message: `Mandatory variant for this category is missing.`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -347,7 +372,7 @@ export async function POST(request) {
     if (lastProduct && lastProduct.master_product_code) {
       try {
         const lastIdNum = parseInt(
-          lastProduct.master_product_code.split("UPID-")[1]
+          lastProduct.master_product_code.split("UPID-")[1],
         );
         if (!isNaN(lastIdNum)) {
           nextId = lastIdNum + 1;
@@ -382,7 +407,7 @@ export async function POST(request) {
         const buffer = Buffer.from(bytes);
         const uploadResult = await uploadToCloudinary(
           [{ buffer, originalname: product_thumbnail_file.name }],
-          "products"
+          "products",
         );
         media.push({
           url: uploadResult[0].secure_url,
@@ -398,7 +423,7 @@ export async function POST(request) {
             const buffer = Buffer.from(bytes);
             const uploadResult = await uploadToCloudinary(
               [{ buffer, originalname: galleryFile.name }],
-              "products"
+              "products",
             );
             media.push({
               url: uploadResult[0].secure_url,
@@ -416,7 +441,7 @@ export async function POST(request) {
             const buffer = Buffer.from(bytes);
             const uploadResult = await uploadToCloudinary(
               [{ buffer, originalname: fileItem.name }],
-              "products"
+              "products",
             );
             media.push({
               url: uploadResult[0].secure_url,
@@ -434,7 +459,7 @@ export async function POST(request) {
           message: "Failed to upload images",
           error: uploadError.message,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -491,14 +516,14 @@ export async function POST(request) {
         message: "Master Product created successfully",
         data: newProduct,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("❌ Master Product POST error:", error);
     if (error.name === "ValidationError") {
       return NextResponse.json(
         { success: false, message: "Validation failed", errors: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
     return NextResponse.json(
@@ -507,7 +532,7 @@ export async function POST(request) {
         message: "Failed to create master product",
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -526,7 +551,7 @@ export async function DELETE(request) {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json(
         { success: false, message: "Product IDs are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const productsToDelete = await Product.find({ _id: { $in: ids } });
@@ -541,7 +566,7 @@ export async function DELETE(request) {
     if (imagesToDelete.length > 0) {
       for (const imageUrl of imagesToDelete) {
         await deleteFromCloudinary(imageUrl).catch((err) =>
-          console.error("⚠️ Error deleting image from Cloudinary:", err)
+          console.error("⚠️ Error deleting image from Cloudinary:", err),
         );
       }
     }
@@ -558,7 +583,7 @@ export async function DELETE(request) {
         message: "Failed to delete products",
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

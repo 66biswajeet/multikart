@@ -6,6 +6,7 @@ import Footer from "@/layout/footer";
 import Header from "@/layout/header";
 import VendorSidebar from "@/components/vendor/sidebar";
 
+// check if the user is authenticated and has vendor role, if not redirect to home page
 const VendorLayout = ({ children }) => {
   const [mode, setMode] = useState(false);
   const [ltr, setLtr] = useState(true);

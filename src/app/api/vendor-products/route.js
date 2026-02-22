@@ -67,15 +67,29 @@ export async function GET(request) {
       "linked_vendor_offerings.is_active": true, // Only active vendor offerings
     };
 
-    // Filter by vendor_product_id if provided
-    if (queryVendorProductId) {
+    // Handle combined vendor slug format (e.g., "product-slug-vendor_product_id")
+    let effectiveVendorProductId = queryVendorProductId;
+    if (queryProductSlug && queryProductSlug.includes("-")) {
+      const slugMatch = queryProductSlug.match(/^(.+)-([a-f0-9]{24})$/i);
+      if (slugMatch) {
+        // Extract vendor_product_id from combined slug
+        effectiveVendorProductId = slugMatch[2];
+        console.log(
+          "📦 Extracted vendor_product_id from combined slug:",
+          effectiveVendorProductId,
+        );
+      }
+    }
+
+    // Filter by vendor_product_id if provided (directly or extracted from slug)
+    if (effectiveVendorProductId) {
       try {
         query["linked_vendor_offerings.vendor_product_id"] =
-          new mongoose.Types.ObjectId(queryVendorProductId);
+          new mongoose.Types.ObjectId(effectiveVendorProductId);
       } catch (e) {
         console.error(
           "❌ Invalid vendor_product_id format:",
-          queryVendorProductId,
+          effectiveVendorProductId,
         );
       }
     }
@@ -186,11 +200,32 @@ export async function GET(request) {
         (offering) => offering.is_active,
       );
 
-      // If filtering by specific vendor_product_id, only include that offering
-      if (queryVendorProductId) {
-        activeOfferings = activeOfferings.filter(
-          (offering) =>
-            offering.vendor_product_id.toString() === queryVendorProductId,
+      // If filtering by specific vendor_product_id (either directly provided or extracted from slug), only include that offering
+      if (effectiveVendorProductId) {
+        console.log(
+          "🔍 Filtering offerings for vendor_product_id:",
+          effectiveVendorProductId,
+        );
+        console.log(
+          "📋 Product offerings before filter:",
+          activeOfferings.map((o) => ({
+            id: o.vendor_product_id.toString(),
+            name: o.stock_quantity,
+          })),
+        );
+
+        activeOfferings = activeOfferings.filter((offering) => {
+          const offeringId = String(offering.vendor_product_id);
+          const matches = offeringId === effectiveVendorProductId;
+          console.log(
+            `  Comparing: ${offeringId} === ${effectiveVendorProductId} ? ${matches}`,
+          );
+          return matches;
+        });
+
+        console.log(
+          "📋 Product offerings after filter:",
+          activeOfferings.length,
         );
       }
 

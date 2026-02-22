@@ -14,6 +14,7 @@ export async function GET(request) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const search = searchParams.get("search") || "";
+    const slug = searchParams.get("slug") || "";
     const type = searchParams.get("type") || "product";
     const status = searchParams.get("status");
     const include_subcategories =
@@ -25,7 +26,14 @@ export async function GET(request) {
 
     // --- REQUIREMENT 5: Optimized Tree View Logic ---
     if (include_subcategories) {
-      // Fetch all categories for this type in one go (fastest)
+      // Build query for category fetch
+      let categoryQuery = { type };
+      if (slug) {
+        // If slug is provided, find the category with that slug
+        categoryQuery.slug = new RegExp(slug, "i");
+      }
+
+      // Always fetch all categories for structured tree building
       const allCategories = await Category.find({ type })
         .sort({ level: 1 })
         .lean();
@@ -47,7 +55,28 @@ export async function GET(request) {
           }));
       };
 
-      categories = buildTree();
+      let categoryTree = buildTree();
+
+      // If slug is provided, find and return only that category with its subcategories
+      if (slug) {
+        const findCategoryBySlug = (cats) => {
+          for (const cat of cats) {
+            if (new RegExp(slug, "i").test(cat.slug)) {
+              return cat;
+            }
+            if (cat.subcategories && cat.subcategories.length > 0) {
+              const found = findCategoryBySlug(cat.subcategories);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        const foundCategory = findCategoryBySlug(categoryTree);
+        categoryTree = foundCategory ? [foundCategory] : [];
+      }
+
+      categories = categoryTree;
 
       // REQUIREMENT 1: Search and auto-expand logic
       if (search) {
@@ -73,6 +102,7 @@ export async function GET(request) {
       // --- Standard Flat List Logic for Table View ---
       let query = { type };
       if (search) query.name = { $regex: search, $options: "i" };
+      if (slug) query.slug = { $regex: slug, $options: "i" };
       if (status !== null && status !== undefined && status !== "") {
         query.status = parseInt(status);
       }
@@ -141,7 +171,7 @@ export async function GET(request) {
     console.error("Error fetching categories:", error);
     const errorResponse = NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
 
     errorResponse.headers.set("Access-Control-Allow-Origin", "*");
@@ -157,11 +187,11 @@ export async function OPTIONS(request) {
   response.headers.set("Access-Control-Allow-Origin", "*");
   response.headers.set(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
+    "GET, POST, PUT, DELETE, OPTIONS",
   );
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
+    "Content-Type, Authorization",
   );
   return response;
 }
@@ -185,7 +215,7 @@ export async function POST(request) {
     if (!name) {
       return NextResponse.json(
         { success: false, message: "Category name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -196,17 +226,17 @@ export async function POST(request) {
       .trim("-");
 
     const attributeMappingData = JSON.parse(
-      formData.get("attribute_mapping") || "[]"
+      formData.get("attribute_mapping") || "[]",
     );
     const variantMappingData = JSON.parse(
-      formData.get("variant_mapping") || "[]"
+      formData.get("variant_mapping") || "[]",
     );
 
     const parsedAttributeMapping = attributeMappingData.filter(
-      (m) => m.attribute_id && m.attribute_id !== ""
+      (m) => m.attribute_id && m.attribute_id !== "",
     );
     const parsedVariantMapping = variantMappingData.filter(
-      (m) => m.variant_id && m.variant_id !== ""
+      (m) => m.variant_id && m.variant_id !== "",
     );
 
     const newCategory = new Category({
@@ -232,13 +262,13 @@ export async function POST(request) {
         message: "Category created successfully",
         data: savedCategory,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.log("❌ Error creating category:", error);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
